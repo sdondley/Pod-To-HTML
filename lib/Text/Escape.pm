@@ -11,6 +11,8 @@ sub escape($str as Str, Str $how) is export {
 }
 
 sub escape_html(Str $str) returns Str is export {
+    return $str unless $str ~~ /<[&<>"']>/;
+
     $str.subst(q{&}, q{&amp;}, :g)\
         .subst(q{<}, q{&lt;}, :g)\
         .subst(q{>}, q{&gt;}, :g)\
@@ -19,6 +21,8 @@ sub escape_html(Str $str) returns Str is export {
 }
 
 sub escape_uri(Str $str) returns Str is export {
+    return $str unless $str ~~ /<-[a..z A..Z 0..9 \-_.!~*'()]>/;
+
     my Str $allowed = 'abcdefghijklmnopqrstuvwxyz'
                     ~ 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
                     ~ '0123456789'
