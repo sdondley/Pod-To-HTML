@@ -7,7 +7,7 @@ my @indexes;
 my @body;
 
 sub pod2html($pod) is export {
-    @body.push: whatever2html($pod);
+    @body.push: node2html($pod);
 
     my $title_html = $title // 'Pod document';
 
@@ -30,24 +30,9 @@ sub pod2html($pod) is export {
         ~ "</body>\n</html>";
 }
 
-sub whatever2html($node) {
-    given $node {
-        when Pod::Heading      { heading2html($node)             }
-        when Pod::Block::Code  { code2html($node)                }
-        when Pod::Block::Named { named2html($node)               }
-        when Pod::Block::Para  { para2html($node)                }
-        when Pod::Block::Table { table2html($node)               }
-#        when Pod::Block::Declarator { declarator2html($node)     }
-        when Pod::Item         { item2html($node)                }
-        when Positional        { $node.map({whatever2html($_)}).join }
-        when Pod::Block::Comment { }
-        default                { $node.Str                       }
-    }
-}
-
 sub metadata {
     @meta.map(-> $p {
-        qq[<meta name="{$p.key}" value="{$p.value}" />\n]
+        qq[<meta name="{escape_html($p.key)}" value="{escape_html($p.value)}" />\n]
     }).join;
 }
 
@@ -84,63 +69,8 @@ sub buildindexes {
     return $r ~ "</nav>\n";
 }
 
-sub heading2html($pod) {
-    my $lvl = min($pod.level, 6);
-    my %escaped = ($_ => escape($pod.content[0].content, $_) for <uri html>);
-    @indexes.push: Pair.new(key => $lvl, value => %escaped);
-
-    return
-        sprintf('<h%d id="%s">', $lvl, %escaped<uri>)
-            ~ qq[<a class="u" href="#___top" title="go to top of document">]
-                ~ %escaped<html>
-            ~ qq[</a>]
-        ~ qq[</h{$lvl}>\n];
-}
-
-sub named2html($pod) {
-    given $pod.name {
-        when 'pod'  { whatever2html($pod.content)     }
-        when 'para' { para2html($pod.content[0])      }
-        when 'defn' { whatever2html($pod.content[0]) ~ "\n"
-                    ~ whatever2html($pod.content[1..*-1]) }
-        when 'config' { }
-        when 'nested' { }
-        default     {
-            if $pod.name eq 'TITLE' {
-                $title = prose2html($pod.content[0]);
-            }
-            elsif $pod.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
-              and $pod.content[0] ~~ Pod::Block::Para {
-                @meta.push: Pair.new(key => $pod.name.lc, value => prose2html($pod.content[0]));
-            }
-
-            '<section>'
-                ~ "<h1>{$pod.name}</h1>\n"
-                ~ whatever2html($pod.content)
-                ~ "</section>\n"
-        }
-    }
-}
-
 sub prose2html($pod, $sep = '') {
-    escape($pod.content.join($sep), 'html');
-}
-
-sub para2html($pod) {
-    '<p>' ~ escape(twine2text($pod.content), 'html') ~ "</p>\n"
-}
-
-sub code2html($pod) {
-    '<pre>' ~ prose2html($pod) ~ "</pre>\n"
-}
-
-sub item2html($pod) {
-#FIXME
-    '<ul><li>' ~ whatever2html($pod.content) ~ "</li></ul>\n"
-}
-
-sub formatting2text($pod) {
-    twine2text($pod.content)
+    escape_html($pod.content.join($sep));
 }
 
 sub twine2text($twine) {
@@ -153,18 +83,63 @@ sub twine2text($twine) {
     return $r;
 }
 
-sub table2html($pod) {
-    my @r;
+
+multi sub node2html($node) {
+    note "{:$node.perl} is missing a node2html multi";
+    $node.Str;
+}
+
+multi sub node2html(Pod::Block::Code $node) {
+    '<pre>' ~ prose2html($node) ~ "</pre>\n"
+}
+
+multi sub node2html(Pod::Block::Comment $node) {
+}
+
+multi sub node2html(Pod::Block::Named $node) {
+    given $node.name {
+        when 'pod'  { node2html($node.content)     }
+        when 'para' { node2html($node.content[0])      }
+        when 'defn' { node2html($node.content[0]) ~ "\n"
+                    ~ node2html($node.content[1..*-1]) }
+        when 'config' { }
+        when 'nested' { }
+        default     {
+            if $node.name eq 'TITLE' {
+                $title = prose2html($node.content[0]);
+            }
+            elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
+              and $node.content[0] ~~ Pod::Block::Para {
+                @meta.push: Pair.new(
+                    key => $node.name.lc,
+                    value => twine2text($node.content[0].content)
+                );
+            }
+
+            '<section>'
+                ~ "<h1>{$node.name}</h1>\n"
+                ~ node2html($node.content)
+                ~ "</section>\n"
+        }
+    }
+}
+
+multi sub node2html(Pod::Block::Para $node) {
+    '<p>' ~ escape_html(twine2text($node.content)) ~ "</p>\n"
+}
+
+multi sub node2html(Pod::Block::Table $pod) {
+    my @r = '<table>';
 
     if $pod.caption {
-        @r.push("<caption>{escape($pod.caption, 'html')}</caption>");
+        @r.push("<caption>{escape_html($pod.caption)}</caption>");
     }
 
     if $pod.headers {
         @r.push(
             '<thead><tr>',
             $pod.headers.map(-> $cell {
-                "<th>{escape($cell, 'html')}</th>"
+                "<th>{node2html($cell)}</th>"
             }),
             '</tr></thead>'
         );
@@ -175,12 +150,43 @@ sub table2html($pod) {
         $pod.content.map(-> $line {
             '<tr>',
             $line.list.map(-> $cell {
-                "<td>{escape($cell, 'html')}</td>"
+                "<td>{node2html($cell)}</td>"
             }),
             '</tr>'
         }),
-        '</tbody>'
+        '</tbody>',
+        '</table>'
     );
 
-    return "<table>\n{@r.join("\n")}\n</table>";
+    return @r.join("\n");
+}
+
+multi sub node2html(Pod::Heading $node) {
+    my $lvl = min($node.level, 6);
+    my $plaintext = twine2text($node.content[0].content);
+    my %escaped = (
+        uri => escape_uri($plaintext),
+        html => escape_html($plaintext),
+    );
+    @indexes.push: Pair.new(key => $lvl, value => %escaped);
+
+    return
+        sprintf('<h%d id="%s">', $lvl, %escaped<uri>)
+            ~ qq[<a class="u" href="#___top" title="go to top of document">]
+                ~ %escaped<html>
+            ~ qq[</a>]
+        ~ qq[</h{$lvl}>\n];
+}
+
+# FIXME
+multi sub node2html(Pod::Item $node) {
+    '<ul><li>' ~ node2html($node.content) ~ "</li></ul>\n"
+}
+
+multi sub node2html(Positional $node) {
+    $node.map({ node2html($_) }).join
+}
+
+multi sub node2html(Str $node) {
+    escape_html($node);
 }
