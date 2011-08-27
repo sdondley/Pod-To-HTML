@@ -77,10 +77,6 @@ sub do-toc returns Str {
     return $r ~ '</nav>';
 }
 
-sub prose2html($pod, $sep = '') returns Str {
-    return escape_html($pod.content.join($sep));
-}
-
 sub twine2text($twine) returns Str {
     return '' unless $twine.elems;
     my $r = $twine[0];
@@ -116,7 +112,7 @@ multi sub node2html(Pod::Block::Declarator $node) returns Str {
 
 multi sub node2html(Pod::Block::Code $node) returns Str {
     say "Code node2html called for {$node.perl}";
-    return '<pre>' ~ prose2html($node) ~ "</pre>\n"
+    return '<pre>' ~ node2inline($node.content) ~ "</pre>\n"
 }
 
 multi sub node2html(Pod::Block::Comment $node) returns Str {
@@ -137,13 +133,13 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
         }
         default {
             if $node.name eq 'TITLE' {
-                $title = prose2html($node.content[0]);
+                $title = node2text($node.content);
             }
             elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
               and $node.content[0] ~~ Pod::Block::Para {
                 @meta.push: Pair.new(
                     key => $node.name.lc,
-                    value => twine2text($node.content[0].content)
+                    value => node2rawtext($node.content)
                 );
             }
 
@@ -202,10 +198,9 @@ multi sub node2html(Pod::Config $node) returns Str {
 multi sub node2html(Pod::Heading $node) returns Str {
     say "Heading node2html called for {$node.perl}";
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
-    my $plaintext = twine2text($node.content[0].content);
     my %escaped = (
-        uri => escape_uri($plaintext),
-        html => escape_html($plaintext),
+        uri => escape_uri(node2rawtext($node.content)),
+        html => node2inline($node.content),
     );
     @indexes.push: Pair.new(key => $lvl, value => %escaped);
 
@@ -236,6 +231,10 @@ multi sub node2inline($node) returns Str {
     return node2text($node);
 }
 
+multi sub node2inline(Pod::Block::Para $node) returns Str {
+    return node2inline($node.content);
+}
+
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
     given $node.type {
         when 'B' { return '<b>' ~ node2inline($node.content) ~ '</b>' }
@@ -254,14 +253,35 @@ multi sub node2inline(Str $node) returns Str {
     return escape_html($node);
 }
 
-#= text only
+#= HTML-escaped text
 multi sub node2text($node) returns Str {
     say "{$node.perl} is missing a node2text multi";
-    return twine2text($node);
+    return escape_html(node2rawtext($node));
+}
+
+multi sub node2text(Pod::Block::Para $node) returns Str {
+    return node2text($node.content);
 }
 
 multi sub node2text(Str $node) returns Str {
     return escape_html($node);
+}
+
+#= plain, unescaped text
+multi sub node2rawtext($node) returns Str {
+    return $node.Str;
+}
+
+multi sub node2rawtext(Pod::Block $node) returns Str {
+    return twine2text($node.content);
+}
+
+multi sub node2rawtext(Positional $node) returns Str {
+    return $node.map({ node2rawtext($_) }).join;
+}
+
+multi sub node2rawtext(Str $node) returns Str {
+    return $node;
 }
 
 DOC INIT {
