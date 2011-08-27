@@ -97,10 +97,6 @@ multi sub node2html($node) returns Str {
     return node2inline($node);
 }
 
-multi sub node2html(Array $node) returns Str {
-    return $node.map({ node2html($_) }).join
-}
-
 multi sub node2html(Pod::Block::Declarator $node) returns Str {
     given $node.WHEREFORE {
         when Sub {
@@ -169,7 +165,7 @@ multi sub node2html(Pod::Block::Table $node) returns Str {
     my @r = '<table>';
 
     if $node.caption {
-        @r.push("<caption>{escape_html($node.caption)}</caption>");
+        @r.push("<caption>{node2inline($node.caption)}</caption>");
     }
 
     if $node.headers {
@@ -226,6 +222,10 @@ multi sub node2html(Pod::Item $node) returns Str {
     return '<ul><li>' ~ node2html($node.content) ~ "</li></ul>";
 }
 
+multi sub node2html(Positional $node) returns Str {
+    return $node.map({ node2html($_) }).join
+}
+
 multi sub node2html(Str $node) returns Str {
     return escape_html($node);
 }
@@ -236,10 +236,6 @@ multi sub node2inline($node) returns Str {
     return node2text($node);
 }
 
-multi sub node2inline(Array $node) returns Str {
-    return $node.map({ node2inline($_) }).join;
-}
-
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
     given $node.type {
         when 'B' { return '<b>' ~ node2inline($node.content) ~ '</b>' }
@@ -248,6 +244,10 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             return $node.type ~ q{=} ~ node2inline($node.content);
         }
     }
+}
+
+multi sub node2inline(Positional $node) returns Str {
+    return $node.map({ node2inline($_) }).join;
 }
 
 multi sub node2inline(Str $node) returns Str {
