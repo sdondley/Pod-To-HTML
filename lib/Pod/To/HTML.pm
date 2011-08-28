@@ -19,7 +19,7 @@ sub pod2html($pod) is export returns Str {
         '<head>',
         '  <title>' ~ $title_html ~ '</title>',
         '  <meta charset="UTF-8" />',
-        #'  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
+        '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
            ( do-metadata() // () ),
         '</head>',
         '<body class="pod" id="___top">',
@@ -237,8 +237,39 @@ multi sub node2inline(Pod::Block::Para $node) returns Str {
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
     given $node.type {
-        when 'B' { return '<b>' ~ node2inline($node.content) ~ '</b>' }
+        when 'B' { return '<strong>' ~ node2inline($node.content) ~ '</strong>' }
         when 'C' { return '<code>' ~ node2inline($node.content) ~ '</code>' }
+        when 'E' {
+            return $node.content.split(q{;}).map({
+                # Perl 6 numbers = Unicode codepoint numbers
+                when /^ \d+ $/  { q{&#} ~ $_ ~ q{;} }
+                # Lowercase = HTML5 entity reference
+                when /^ <[a..z]>+ $/ { q{&} ~ $_ ~ q{;} }
+                # Uppercase = Unicode codepoint names
+                default         { q{<kbd class="todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
+            }).join;
+        }
+        when 'I' { return '<mark>' ~ node2inline($node.content) ~ '</mark>' }
+        when 'L' {
+            my ($label, $link);
+
+            if $node.content ~~ /^ (<-[|]>+) '|' (.*) $/ {
+                ($label, $link) = $/.[0,1];
+            }
+            else {
+                $link = $node.content;
+
+                if $node.content.substr(0, 1) eq '#' {
+                    $label = $node.content.substr(1);
+                }
+                else {
+                    $label = $node.content;
+                }
+            }
+
+            return qq[<a href="{escape_uri($link)}">] ~ node2inline($label) ~ '</a>';
+        }
+        when 'U' { return '<em>' ~ node2inline($node.content) ~ '</em>' }
         default {
             return $node.type ~ q{=} ~ node2inline($node.content);
         }
