@@ -239,41 +239,36 @@ multi sub node2inline(Pod::Block::Para $node) returns Str {
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
     given $node.type {
+        #= Basis
         when 'B' { return '<strong>' ~ node2inline($node.content) ~ '</strong>' }
+
+        #= Code
         when 'C' { return '<code>' ~ node2inline($node.content) ~ '</code>' }
+
+        #= Escape
         when 'E' {
             return $node.content.split(q{;}).map({
                 # Perl 6 numbers = Unicode codepoint numbers
-                when /^ \d+ $/  { q{&#} ~ $_ ~ q{;} }
+                when /^ \d+ $/
+                    { q{&#} ~ $_ ~ q{;} }
                 # Lowercase = HTML5 entity reference
-                when /^ <[a..z]>+ $/ { q{&} ~ $_ ~ q{;} }
+                when /^ <[a..z]>+ $/
+                    { q{&} ~ $_ ~ q{;} }
                 # Uppercase = Unicode codepoint names
-                default         { q{<kbd class="todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
+                default
+                    { q{<kbd class="todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
             }).join;
         }
+
+        #= Important
         when 'I' { return '<mark>' ~ node2inline($node.content) ~ '</mark>' }
-        when 'L' {
-            my ($label, $link);
 
-            if $node.content ~~ /^ (<-[|]>+) '|' (.*) $/ {
-                ($label, $link) = $/.[0,1];
-            }
-            else {
-                $link = $node.content;
-
-                if $node.content.substr(0, 1) eq '#' {
-                    $label = $node.content.substr(1);
-                }
-                else {
-                    $label = $node.content;
-                }
-            }
-
-            return qq[<a href="{escape_uri($link)}">] ~ node2inline($label) ~ '</a>';
-        }
+        #= Unimportant
         when 'U' { return '<em>' ~ node2inline($node.content) ~ '</em>' }
+
+        # TODO
         default {
-            return $node.type ~ q{=} ~ node2inline($node.content);
+            return $node.type ~ q{&lt;} ~ node2inline($node.content) ~ q{&gt;};
         }
     }
 }
