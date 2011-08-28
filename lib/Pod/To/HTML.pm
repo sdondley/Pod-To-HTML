@@ -39,7 +39,7 @@ sub pod2html($pod) is export returns Str {
 #= Returns accumulated metadata as a string of C«<meta>» tags
 sub do-metadata returns Str {
     return @meta.map(-> $p {
-        qq[<meta name="{escape_html($p.key)}" value="{escape_html($p.value)}" />]
+        qq[<meta name="{escape_html($p.key)}" value="{node2text($p.value)}" />]
     }).join("\n");
 }
 
@@ -78,6 +78,7 @@ sub do-toc returns Str {
 }
 
 sub twine2text($twine) returns Str {
+    say "twine2text called for {$twine.perl}";
     return '' unless $twine.elems;
     my $r = $twine[0];
     for $twine[1..*] -> $f, $s {
@@ -139,7 +140,7 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
               and $node.content[0] ~~ Pod::Block::Para {
                 @meta.push: Pair.new(
                     key => $node.name.lc,
-                    value => node2rawtext($node.content)
+                    value => $node.content
                 );
             }
 
@@ -225,9 +226,10 @@ multi sub node2html(Str $node) returns Str {
     return escape_html($node);
 }
 
+
 #= inline level or below
 multi sub node2inline($node) returns Str {
-    say "{$node.perl} is missing a node2inline multi";
+    say "missing a node2inline multi for {$node.perl}";
     return node2text($node);
 }
 
@@ -284,9 +286,10 @@ multi sub node2inline(Str $node) returns Str {
     return escape_html($node);
 }
 
+
 #= HTML-escaped text
 multi sub node2text($node) returns Str {
-    say "{$node.perl} is missing a node2text multi";
+    say "missing a node2text multi for {$node.perl}";
     return escape_html(node2rawtext($node));
 }
 
@@ -294,16 +297,25 @@ multi sub node2text(Pod::Block::Para $node) returns Str {
     return node2text($node.content);
 }
 
+# FIXME: a lot of these multis are identical except the function name used...
+#        there has to be a better way to write this?
+multi sub node2text(Positional $node) returns Str {
+    return $node.map({ node2text($_) }).join;
+}
+
 multi sub node2text(Str $node) returns Str {
     return escape_html($node);
 }
 
+
 #= plain, unescaped text
 multi sub node2rawtext($node) returns Str {
+    say "Generic node2rawtext called with {$node.perl}";
     return $node.Str;
 }
 
 multi sub node2rawtext(Pod::Block $node) returns Str {
+    say "node2rawtext called for {$node.perl}";
     return twine2text($node.content);
 }
 
