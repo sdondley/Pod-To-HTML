@@ -245,12 +245,22 @@ multi sub node2inline(Pod::Block::Para $node) returns Str {
 }
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
-    given $node.type {
-        #= Basis
-        when 'B' { return '<strong>' ~ node2inline($node.content) ~ '</strong>' }
+    my %basic-html = (
+        B => 'mark',    #= Basis
+        C => 'code',    #= Code
+        I => 'strong',  #= Important
+        K => 'kbd',     #= Keyboard
+        R => 'var',     #= Replaceable
+        T => 'samp',    #= Terminal
+        U => 'em',      #= Unimportant
+    );
 
-        #= Code
-        when 'C' { return '<code>' ~ node2inline($node.content) ~ '</code>' }
+    given $node.type {
+        when any(%basic-html.keys) {
+            return q{<} ~ %basic-html{$_} ~ q{>}
+                ~ node2inline($node.content)
+                ~ q{</} ~ %basic-html{$_} ~ q{>};
+        }
 
         #= Escape
         when 'E' {
@@ -266,12 +276,6 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                     { q{<kbd class="todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
             }).join;
         }
-
-        #= Important
-        when 'I' { return '<mark>' ~ node2inline($node.content) ~ '</mark>' }
-
-        #= Unimportant
-        when 'U' { return '<em>' ~ node2inline($node.content) ~ '</em>' }
 
         # TODO
         default {
