@@ -19,6 +19,13 @@ sub pod2html($pod) is export returns Str {
         '<head>',
         '  <title>' ~ $title_html ~ '</title>',
         '  <meta charset="UTF-8" />',
+        '  <style>',
+        # code gets a default font
+        # kbd gets a slightly less common monospace font
+        # samp gets the hard pixelly fonts
+        '    kbd { font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }',
+        '    samp { font-family: "Terminus", "Courier", "Lucida Console", monospace }',
+        '  </style>',
         '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
            ( do-metadata() // () ),
         '</head>',
