@@ -273,13 +273,15 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                     { q{&} ~ $_ ~ q{;} }
                 # Uppercase = Unicode codepoint names
                 default
-                    { q{<kbd class="todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
+                    { q{<kbd class="pod2html-todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
             }).join;
         }
 
-        # TODO
+        # Stuff I haven't figured out yet
         default {
-            return $node.type ~ q{&lt;} ~ node2inline($node.content) ~ q{&gt;};
+            return qq{<kbd class="pod2html-todo">{$node.type}&lt;}
+                    ~ node2inline($node.content)
+                    ~ q{&gt;</kbd>};
         }
     }
 }
