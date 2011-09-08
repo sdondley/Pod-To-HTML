@@ -1,10 +1,15 @@
 module Pod::To::HTML;
 use Text::Escape;
 
+# FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
+# way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at
+# the bottom to something much more readable.
+
 my $title;
 my @meta;
 my @indexes;
 my @body;
+my @footnotes;
 
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod) is export returns Str {
@@ -20,11 +25,14 @@ sub pod2html($pod) is export returns Str {
         '  <title>' ~ $title_html ~ '</title>',
         '  <meta charset="UTF-8" />',
         '  <style>',
-        # code gets a default font
+        # code gets the browser-default font
         # kbd gets a slightly less common monospace font
         # samp gets the hard pixelly fonts
         '    kbd { font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }',
         '    samp { font-family: "Terminus", "Courier", "Lucida Console", monospace }',
+        # footnote things:
+        '    aside { opacity: 0.7 }',
+        '    a[id^="fn-"]:target { background: #ff0 }',
         '  </style>',
         '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
            ( do-metadata() // () ),
@@ -38,6 +46,7 @@ sub pod2html($pod) is export returns Str {
                          !! () ),
         ( do-toc() // () ),
         @body,
+        do-footnotes(),
         '</body>',
         "</html>\n"
     );
@@ -82,6 +91,31 @@ sub do-toc returns Str {
     }
 
     return $r ~ '</nav>';
+}
+
+#= Keep count of how many footnotes we've output.
+my Int $done-notes = 0;
+
+#= Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
+#  before each C«</section>» tag (once we have those per-header) and have notes that are visually
+#  and semantically attached to the section.
+sub do-footnotes returns Str {
+    #state $done-notes = 0; # TODO 2011-09-07 Rakudo-nom bug
+
+    return '' unless @footnotes;
+
+    my Int $current-note = $done-notes + 1;
+    my $notes = @footnotes.kv.map(-> $k, $v {
+                    my $num = $k + $current-note;
+                    qq{<li><a href="#fn-ref-$num" id="fn-$num">[↑]</a> $v </li>\n}
+                }).join;
+
+    $done-notes += @footnotes;
+    @footnotes = ();
+
+    return qq[<aside><ol start="$current-note">\n]
+         ~ $notes
+         ~ qq[</ol></aside>\n];
 }
 
 sub twine2text($twine) returns Str {
@@ -203,6 +237,8 @@ multi sub node2html(Pod::Config $node) returns Str {
     return '';
 }
 
+# TODO: would like some way to wrap these and the following content in a <section>; this might be
+# the same way we get lists working...
 multi sub node2html(Pod::Heading $node) returns Str {
     say "Heading node2html called for {$node.perl}";
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
@@ -275,6 +311,14 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                 default
                     { q{<kbd class="pod2html-todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
             }).join;
+        }
+
+        #= Note
+        when 'N' {
+            @footnotes.push(node2inline($node.content));
+
+            my $id = +@footnotes;
+            return qq{<a href="#fn-$id" id="fn-ref-$id">[$id]</a>};
         }
 
         # Stuff I haven't figured out yet
