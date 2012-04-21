@@ -1,5 +1,9 @@
-module Pod::To::HTML;
+class Pod::To::HTML;
 use Text::Escape;
+
+method render($pod) {
+    pod2html($pod)
+}
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
 # way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at
@@ -380,9 +384,4 @@ multi sub node2rawtext(Positional $node) returns Str {
 
 multi sub node2rawtext(Str $node) returns Str {
     return $node;
-}
-
-DOC INIT {
-    say pod2html($=POD);
-    exit;
 }
