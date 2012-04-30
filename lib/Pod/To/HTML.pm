@@ -37,8 +37,11 @@ sub pod2html($pod) is export returns Str {
         # samp gets the hard pixelly fonts
         '    kbd { font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }',
         '    samp { font-family: "Terminus", "Courier", "Lucida Console", monospace }',
+        # WHATWG HTML frowns on the use of <u> because it looks like a link,
+        # so we make it not look like one.
+        '    u { text-decoration: none }',
         # footnote things:
-        '    aside { opacity: 0.7 }',
+        '    aside, u { opacity: 0.7 }',
         '    a[id^="fn-"]:target { background: #ff0 }',
         '  </style>',
         '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
@@ -295,7 +298,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         K => 'kbd',     #= Keyboard
         R => 'var',     #= Replaceable
         T => 'samp',    #= Terminal
-        U => 'i',       #= Unusual
+        U => 'u',       #= Unusual
     );
 
     given $node.type {
