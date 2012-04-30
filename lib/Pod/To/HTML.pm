@@ -295,7 +295,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         K => 'kbd',     #= Keyboard
         R => 'var',     #= Replaceable
         T => 'samp',    #= Terminal
-        U => 'i',       #= Unimportant
+        U => 'i',       #= Unusual
     );
 
     given $node.type {
