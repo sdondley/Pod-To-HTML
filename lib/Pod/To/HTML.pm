@@ -289,13 +289,13 @@ multi sub node2inline(Pod::Block::Para $node) returns Str {
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
     my %basic-html = (
-        B => 'mark',    #= Basis
+        B => 'strong',  #= Basis
         C => 'code',    #= Code
-        I => 'strong',  #= Important
+        I => 'em',      #= Important
         K => 'kbd',     #= Keyboard
         R => 'var',     #= Replaceable
         T => 'samp',    #= Terminal
-        U => 'em',      #= Unimportant
+        U => 'i',       #= Unimportant
     );
 
     given $node.type {
