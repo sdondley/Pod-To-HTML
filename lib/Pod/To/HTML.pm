@@ -1,5 +1,5 @@
 class Pod::To::HTML;
-use Text::Escape;
+use URI::Escape;
 
 method render($pod) {
     pod2html($pod)
@@ -17,6 +17,16 @@ my @footnotes;
 
  sub Debug(Callable $)  { }         # Disable debug code
 #sub Debug(Callable $c) { $c() }    # Enable debug code
+
+sub escape_html(Str $str) returns Str {
+    return $str unless $str ~~ /<[&<>"']>/;
+
+    $str.subst(q{&}, q{&amp;}, :g)\
+        .subst(q{<}, q{&lt;}, :g)\
+        .subst(q{>}, q{&gt;}, :g)\
+        .subst(q{"}, q{&quot;}, :g)\
+        .subst(q{'}, q{&#39;}, :g);
+}
 
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod) is export returns Str {
@@ -253,7 +263,7 @@ multi sub node2html(Pod::Heading $node) returns Str {
     Debug { say "Heading node2html called for {$node.perl}" };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
-        uri => escape_uri(node2rawtext($node.content)),
+        uri => uri_escape(node2rawtext($node.content)),
         html => node2inline($node.content),
     );
     @indexes.push: Pair.new(key => $lvl, value => %escaped);

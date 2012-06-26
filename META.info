@@ -2,6 +2,6 @@
     "name"        : "Pod::To::HTML",
     "version"     : "*",
     "description" : "Convert Perl 6 Pod to HTML",
-    "depends"     : [],
+    "depends"     : ["URI"],
     "source-url"  : "git://github.com/perl6/Pod-To-HTML.git"
 }
