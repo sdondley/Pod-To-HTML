@@ -21,11 +21,8 @@ my @footnotes;
 sub escape_html(Str $str) returns Str {
     return $str unless $str ~~ /<[&<>"']>/;
 
-    $str.subst(q{&}, q{&amp;}, :g)\
-        .subst(q{<}, q{&lt;}, :g)\
-        .subst(q{>}, q{&gt;}, :g)\
-        .subst(q{"}, q{&quot;}, :g)\
-        .subst(q{'}, q{&#39;}, :g);
+    $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'}     ] =>
+                [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;} ] );
 }
 
 #= Converts a Pod tree to a HTML document.
