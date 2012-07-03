@@ -193,6 +193,7 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
         default {
             if $node.name eq 'TITLE' {
                 $title = node2text($node.content);
+                return '';
             }
             elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
               and $node.content[0] ~~ Pod::Block::Para {
