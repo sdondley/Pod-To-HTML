@@ -347,7 +347,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             }
             # TODO: URI-escape $url
             $text = escape_html $text;
-            return qq{<a href="$url">$text</a>}
+            return qq{<a href="$url">{$text}</a>}
         }
 
         # Stuff I haven't figured out yet
