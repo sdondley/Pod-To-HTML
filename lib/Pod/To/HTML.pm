@@ -85,12 +85,10 @@ sub do-toc returns Str {
     for @indexes -> $p {
         my $lvl  = $p.key;
         my %head = $p.value;
-        if +@opened {
-            while @opened[*-1] > $lvl {
-                $r ~= $indent x @opened - 1
-                    ~ "</ol>\n";
-                @opened.pop;
-            }
+        while @opened && @opened[*-1] > $lvl {
+            $r ~= $indent x @opened - 1
+                ~ "</ol>\n";
+            @opened.pop;
         }
         my $last = @opened[*-1] // 0;
         if $last < $lvl {
