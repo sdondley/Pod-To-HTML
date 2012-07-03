@@ -337,6 +337,19 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             return qq{<a href="#fn-$id" id="fn-ref-$id">[$id]</a>};
         }
 
+        #= Links
+        when 'L' {
+            my $url  = $node.content.join;
+            my $text = $url;
+            if $url ~~ /'|'/ {
+                $text = $/.prematch;
+                $url  = $/.postmatch;
+            }
+            # TODO: URI-escape $url
+            $text = escape_html $text;
+            return qq{<a href="$url">$text</a>}
+        }
+
         # Stuff I haven't figured out yet
         default {
             return qq{<kbd class="pod2html-todo">{$node.type}&lt;}
