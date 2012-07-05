@@ -27,6 +27,7 @@ sub escape_html(Str $str) returns Str {
 
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod) is export returns Str {
+    ($title, @meta, @indexes, @body, @footnotes) = ();
     @body.push: node2html($pod);
 
     my $title_html = $title // 'Pod document';
