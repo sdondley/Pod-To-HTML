@@ -30,7 +30,7 @@ sub pod2html($pod) is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
     @body.push: node2html($pod);
 
-    my $title_html = $title // 'Pod document';
+    my $title_html = escape_html($title // 'Pod document');
 
     # TODO: make this look nice again when q:to"" gets implemented
     my @prelude = (
