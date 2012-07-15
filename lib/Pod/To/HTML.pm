@@ -9,6 +9,7 @@ method render($pod) {
 # way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at
 # the bottom to something much more readable.
 
+my &url;
 my $title;
 my @meta;
 my @indexes;
@@ -26,8 +27,9 @@ sub escape_html(Str $str) returns Str {
 }
 
 #= Converts a Pod tree to a HTML document.
-sub pod2html($pod) is export returns Str {
+sub pod2html($pod, :&url = -> $url { $url }) is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
+    &OUTER::url = &url;
     @body.push: node2html($pod);
 
     my $title_html = escape_html($title // 'Pod document');
@@ -346,6 +348,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                 $text = $/.prematch;
                 $url  = $/.postmatch;
             }
+            $url = url($url);
             # TODO: URI-escape $url
             $text = escape_html $text;
             return qq{<a href="$url">{$text}</a>}
