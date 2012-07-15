@@ -26,11 +26,45 @@ sub escape_html(Str $str) returns Str {
                 [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;} ] );
 }
 
+sub visit($root, :&pre, :&post, :&assemble = -> *%{ Nil }) {
+    my ($pre, $post);
+    $pre = pre($root) if defined &pre;
+    my @content = $root.?content.map: {visit $_, :&pre, :&post, :&assemble};
+    $post = post($root, :@content) if defined &post;
+    return assemble(:$pre, :$post, :@content, :node($root));
+}
+
+class Pod::List is Pod::Block { };
+
+sub assemble-list-items(:@content, :$node, *% ) {
+    my @current;
+    my @result;
+    my $found;
+    for @content -> $c {
+        if $c ~~ Pod::Item {
+            @current.push: $c;
+            $found = True;
+        }
+        elsif @current {
+            @result.push: Pod::List.new(content => @current);
+            @current = ();
+            @result.push: $c;
+        }
+        else {
+            @result.push: $c;
+        }
+    }
+    @result.push: Pod::List.new(content => @current) if @current;
+    @current = ();
+    return $found ?? $node.clone(content => @result) !! $node;
+}
+
+
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod, :&url = -> $url { $url }) is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
     &OUTER::url = &url;
-    @body.push: node2html($pod);
+    @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
 
     my $title_html = escape_html($title // 'Pod document');
 
@@ -275,9 +309,12 @@ multi sub node2html(Pod::Heading $node) returns Str {
 }
 
 # FIXME
+multi sub node2html(Pod::List $node) returns Str {
+    return '<ul>' ~ node2html($node.content) ~ "</ul>\n";
+}
 multi sub node2html(Pod::Item $node) returns Str {
     Debug { say "List Item node2html called for {$node.perl}" };
-    return '<ul><li>' ~ node2html($node.content) ~ "</li></ul>";
+    return '<li>' ~ node2html($node.content) ~ "</li>\n";
 }
 
 multi sub node2html(Positional $node) returns Str {
