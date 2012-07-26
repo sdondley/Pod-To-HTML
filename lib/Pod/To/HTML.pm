@@ -61,7 +61,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #= Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }) is export returns Str {
+sub pod2html($pod, :&url = -> $url { $url }, :$header = '', :$footer = '') is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
@@ -92,6 +92,7 @@ sub pod2html($pod, :&url = -> $url { $url }) is export returns Str {
            ( do-metadata() // () ),
         '</head>',
         '<body class="pod" id="___top">',
+        $header,
     );
 
     return join(qq{\n},
@@ -101,6 +102,7 @@ sub pod2html($pod, :&url = -> $url { $url }) is export returns Str {
         ( do-toc() // () ),
         @body,
         do-footnotes(),
+        $footer,
         '</body>',
         "</html>\n"
     );
