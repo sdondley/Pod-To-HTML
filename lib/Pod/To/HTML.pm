@@ -61,7 +61,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #= Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }, :$header = '', :$footer = '') is export returns Str {
+sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '') is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
@@ -90,6 +90,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$header = '', :$footer = '') is ex
         '  </style>',
         '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
            ( do-metadata() // () ),
+           $head,
         '</head>',
         '<body class="pod" id="___top">',
         $header,
