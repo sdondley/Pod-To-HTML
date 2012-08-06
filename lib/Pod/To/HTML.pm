@@ -228,6 +228,22 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
             return node2html($node.content[0]) ~ "\n"
                     ~ node2html($node.content[1..*-1]);
         }
+        when 'Image' {
+            my $url;
+            if $node.content == 1 {
+                my $n = $node.content[0];
+                if $n ~~ Str {
+                    $url = $n;
+                }
+                elsif ($n ~~ Pod::Block::Para) &&  $n.content == 1 {
+                    $url = $n.content[0] if $n.content[0] ~~ Str;
+                }
+            }
+            unless $url.defined {
+                die "Found an Image block, but don't know how to extract the image URL :(";
+            }
+            return qq[<img src="$url" />];
+        }
         default {
             if $node.name eq 'TITLE' {
                 $title = node2text($node.content);
