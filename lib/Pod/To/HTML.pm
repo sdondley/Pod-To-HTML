@@ -66,7 +66,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
 
-    my $title_html = escape_html($title // 'Pod document');
+    my $title_html = $title // 'Pod document';
 
     # TODO: make this look nice again when q:to"" gets implemented
     my @prelude = (
