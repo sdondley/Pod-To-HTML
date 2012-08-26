@@ -398,7 +398,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Links
         when 'L' {
-            my $url  = $node.content.join;
+            my $url  = node2inline($node.content);
             my $text = $url;
             if $url ~~ /'|'/ {
                 $text = $/.prematch;
@@ -406,7 +406,6 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             }
             $url = url($url);
             # TODO: URI-escape $url
-            $text = escape_html $text;
             return qq{<a href="$url">{$text}</a>}
         }
 
