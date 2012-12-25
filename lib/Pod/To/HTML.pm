@@ -406,7 +406,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             }
             $url = url($url);
             # TODO: URI-escape $url
-            return qq{<a href="$url">{$text}</a>}
+            return qq[<a href="$url">{$text}</a>]
         }
 
         # Stuff I haven't figured out yet
