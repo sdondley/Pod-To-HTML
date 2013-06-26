@@ -77,36 +77,37 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
 
     my $title_html = $title // 'Pod document';
 
-    # TODO: make this look nice again when q:to"" gets implemented
-    my @prelude = (
-        '<!doctype html>',
-        '<html>',
-        '<head>',
-        '  <title>' ~ $title_html ~ '</title>',
-        '  <meta charset="UTF-8" />',
-        '  <style>',
-        # code gets the browser-default font
-        # kbd gets a slightly less common monospace font
-        # samp gets the hard pixelly fonts
-        '    kbd { font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }',
-        '    samp { font-family: "Terminus", "Courier", "Lucida Console", monospace }',
-        # WHATWG HTML frowns on the use of <u> because it looks like a link,
-        # so we make it not look like one.
-        '    u { text-decoration: none }',
-        # footnote things:
-        '    aside, u { opacity: 0.7 }',
-        '    a[id^="fn-"]:target { background: #ff0 }',
-        '  </style>',
-        '  <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">',
-           ( do-metadata() // () ),
-           $head,
-        '</head>',
-        '<body class="pod" id="___top">',
-        $header,
-    );
+    my $prelude = qq:to/END/;
+        <!doctype html>
+        <html>
+        <head>
+          <title>{ $title_html }</title>
+          <meta charset="UTF-8" />
+          <style>
+            /* code gets the browser-default font
+             * kbd gets a slightly less common monospace font
+             * samp gets the hard pixelly fonts
+             */
+            kbd \{ font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }
+            samp \{ font-family: "Terminus", "Courier", "Lucida Console", monospace }
+            /* WHATWG HTML frowns on the use of <u> because it looks like a link,
+             * so we make it not look like one.
+             */
+            u \{ text-decoration: none }
+            // footnote things:
+            aside, u \{ opacity: 0.7 }
+            a[id^="fn-"]:target \{ background: #ff0 }
+          </style>
+          <link rel="stylesheet" href="http://perlcabal.org/syn/perl.css">
+          { do-metadata() // () }
+          $head
+        </head>
+        <body class="pod" id="___top">
+        $header
+        END
 
     return join(qq{\n},
-        @prelude,
+        $prelude,
         ( $title.defined ?? "<h1>{$title_html}</h1>"
                          !! () ),
         ( do-toc() // () ),
