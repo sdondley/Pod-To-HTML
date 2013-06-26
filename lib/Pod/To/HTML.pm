@@ -420,6 +420,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         # Stuff I haven't figured out yet
         default {
+            Debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
             return qq{<kbd class="pod2html-todo">{$node.type}&lt;}
                     ~ node2inline($node.content)
                     ~ q{&gt;</kbd>};
