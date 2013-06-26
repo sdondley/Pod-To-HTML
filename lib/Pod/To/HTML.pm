@@ -94,6 +94,9 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
              * so we make it not look like one.
              */
             u \{ text-decoration: none }
+            .nested \{
+                margin-left: 3em;
+            }
             // footnote things:
             aside, u \{ opacity: 0.7 }
             a[id^="fn-"]:target \{ background: #ff0 }
@@ -231,7 +234,9 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
     Debug { note colored("Named Block node2html called for ", "bold") ~ $node.gist };
     given $node.name {
         when 'config' { return '' }
-        when 'nested' { return '' }
+        when 'nested' {
+            return qq{<div class="nested">\n} ~ node2html($node.content) ~ qq{\n</div>\n};
+        }
         when 'pod'  { return node2html($node.content); }
         when 'para' { return node2html($node.content[0]); }
         when 'defn' {
