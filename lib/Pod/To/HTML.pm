@@ -237,6 +237,7 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
         when 'nested' {
             return qq{<div class="nested">\n} ~ node2html($node.content) ~ qq{\n</div>\n};
         }
+        when 'output' { return '<pre>\n' ~ node2inline($node.content) ~ '</pre>\n'; }
         when 'pod'  { return node2html($node.content); }
         when 'para' { return node2html($node.content[0]); }
         when 'defn' {
