@@ -418,6 +418,10 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             return qq[<a href="$url">{$text}</a>]
         }
 
+        # zero-width comment
+        when 'Z' {
+            return '';
+        }
         # Stuff I haven't figured out yet
         default {
             Debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
