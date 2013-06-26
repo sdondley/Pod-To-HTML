@@ -422,6 +422,16 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         when 'Z' {
             return '';
         }
+
+        when 'D' {
+            # TODO memorise these definitions and display them properly
+            my $text = node2inline($node.content);
+            if $text ~~ /'|'/ {
+                $text = $/.prematch;
+            }
+            return qq[<defn>{$text}</defn>]
+        }
+
         # Stuff I haven't figured out yet
         default {
             Debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
