@@ -1,6 +1,15 @@
 class Pod::To::HTML;
 use URI::Escape;
 
+#try require Term::ANSIColor <&colored>;
+#if &colored.defined {
+    #&colored = -> $t, $c { $t };
+#}
+
+sub colored($text, $how) {
+    $text
+}
+
 method render($pod) {
     pod2html($pod)
 }
@@ -174,7 +183,7 @@ sub do-footnotes returns Str {
 }
 
 sub twine2text($twine) returns Str {
-    Debug { say "twine2text called for {$twine.perl}" };
+    Debug { note colored("twine2text called for ", "bold") ~ $twine.perl };
     return '' unless $twine.elems;
     my $r = $twine[0];
     for $twine[1..*] -> $f, $s {
@@ -186,7 +195,7 @@ sub twine2text($twine) returns Str {
 
 #= block level or below
 multi sub node2html($node) returns Str {
-    Debug { say "Generic node2html called for {$node.perl}" };
+    Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
     return node2inline($node);
 }
 
@@ -201,24 +210,24 @@ multi sub node2html(Pod::Block::Declarator $node) returns Str {
             ~ "\n</article>\n";
         }
         default {
-            Debug { say "I don't know what {$node.WHEREFORE.perl} is" };
+            Debug { note "I don't know what {$node.WHEREFORE.perl} is" };
             node2html([$node.WHEREFORE.perl, q{: }, $node.content]);
         }
     }
 }
 
 multi sub node2html(Pod::Block::Code $node) returns Str {
-    Debug { say "Code node2html called for {$node.perl}" };
+    Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
     return '<pre>' ~ node2inline($node.content) ~ "</pre>\n"
 }
 
 multi sub node2html(Pod::Block::Comment $node) returns Str {
-    Debug { say "Comment node2html called for {$node.perl}" };
+    Debug { note colored("Comment node2html called for ", "bold") ~ $node.gist };
     return '';
 }
 
 multi sub node2html(Pod::Block::Named $node) returns Str {
-    Debug { say "Named Block node2html called for {$node.perl}" };
+    Debug { note colored("Named Block node2html called for ", "bold") ~ $node.gist };
     given $node.name {
         when 'config' { return '' }
         when 'nested' { return '' }
@@ -266,12 +275,12 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
 }
 
 multi sub node2html(Pod::Block::Para $node) returns Str {
-    Debug { say "Para node2html called for {$node.perl}" };
+    Debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
     return '<p>' ~ node2inline($node.content) ~ "</p>\n";
 }
 
 multi sub node2html(Pod::Block::Table $node) returns Str {
-    Debug { say "Table node2html called for {$node.perl}" };
+    Debug { note colored("Table node2html called for ", "bold") ~ $node.gist };
     my @r = '<table>';
 
     if $node.caption {
@@ -305,14 +314,14 @@ multi sub node2html(Pod::Block::Table $node) returns Str {
 }
 
 multi sub node2html(Pod::Config $node) returns Str {
-    Debug { say "Config node2html called for {$node.perl}" };
+    Debug { note colored("Config node2html called for ", "bold") ~ $node.perl };
     return '';
 }
 
 # TODO: would like some way to wrap these and the following content in a <section>; this might be
 # the same way we get lists working...
 multi sub node2html(Pod::Heading $node) returns Str {
-    Debug { say "Heading node2html called for {$node.perl}" };
+    Debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
         uri => uri_escape(node2rawtext($node.content)),
@@ -332,7 +341,7 @@ multi sub node2html(Pod::List $node) returns Str {
     return '<ul>' ~ node2html($node.content) ~ "</ul>\n";
 }
 multi sub node2html(Pod::Item $node) returns Str {
-    Debug { say "List Item node2html called for {$node.perl}" };
+    Debug { note colored("List Item node2html called for ", "bold") ~ $node.gist };
     return '<li>' ~ node2html($node.content) ~ "</li>\n";
 }
 
@@ -347,7 +356,7 @@ multi sub node2html(Str $node) returns Str {
 
 #= inline level or below
 multi sub node2inline($node) returns Str {
-    Debug { say "missing a node2inline multi for {$node.perl}" };
+    Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
     return node2text($node);
 }
 
@@ -429,7 +438,7 @@ multi sub node2inline(Str $node) returns Str {
 
 #= HTML-escaped text
 multi sub node2text($node) returns Str {
-    Debug { say "missing a node2text multi for {$node.perl}" };
+    Debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
     return escape_html(node2rawtext($node));
 }
 
@@ -450,12 +459,12 @@ multi sub node2text(Str $node) returns Str {
 
 #= plain, unescaped text
 multi sub node2rawtext($node) returns Str {
-    Debug { say "Generic node2rawtext called with {$node.perl}" };
+    Debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
     return $node.Str;
 }
 
 multi sub node2rawtext(Pod::Block $node) returns Str {
-    Debug { say "node2rawtext called for {$node.perl}" };
+    Debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
     return twine2text($node.content);
 }
 
