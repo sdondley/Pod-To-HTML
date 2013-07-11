@@ -24,6 +24,7 @@ my @meta;
 my @indexes;
 my @body;
 my @footnotes;
+my %crossrefs;
 
  sub Debug(Callable $)  { }         # Disable debug code
 #sub Debug(Callable $c) { $c() }    # Enable debug code
@@ -437,6 +438,24 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                 $text = $/.prematch;
             }
             return qq[<defn>{$text}</defn>]
+        }
+
+        when 'X' {
+            # TODO do something with the crossrefs
+            my $text = node2inline($node.content);
+            my $defn = $text;
+            if $text ~~ /'|'/ {
+                $defn = $/.postmatch;
+                $text = $/.prematch;
+            }
+            my @hierdefn = $defn.split(/\s*','\s*/);
+            if +@hierdefn > 1 {
+                $defn = @hierdefn.join("--")
+            } else {
+                $defn = @hierdefn[0]
+            }
+            %crossrefs{$defn} = $text;
+            return qq[<span name="$defn">$text\</span>];
         }
 
         # Stuff I haven't figured out yet
