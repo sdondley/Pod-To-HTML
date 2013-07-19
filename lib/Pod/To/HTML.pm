@@ -152,7 +152,7 @@ sub do-toc returns Str {
         }
         $r ~= $indent x $lvl
             ~ qq[<li class="indexItem indexItem{$lvl}">]
-            ~ qq[<a href="#{%head<uri>}">{%head<html>}</a>\n];
+            ~ qq[<a href="#{%head<uri>}">{%head<html>}</a></li>\n];
     }
     for ^@opened {
         $r ~= $indent x @opened - 1 - $^left
