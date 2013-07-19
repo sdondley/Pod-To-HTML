@@ -420,9 +420,14 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             if $url ~~ /'|'/ {
                 $text = $/.prematch;
                 $url  = $/.postmatch;
+            } elsif $text ~~ /^'#'/ {
+                # if we have an internal-only link, strip the # from the text.
+                $text = $/.postmatch
             }
             $url = url($url);
-            # TODO: URI-escape $url
+            if $url ~~ /^'#'/ {
+                $url = '#' ~ uri_escape($/.postmatch)
+            }
             return qq[<a href="$url">{$text}</a>]
         }
 
