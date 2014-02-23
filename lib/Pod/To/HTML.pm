@@ -36,6 +36,12 @@ sub escape_html(Str $str) returns Str {
                 [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;} ] );
 }
 
+sub unescape_html(Str $str) returns Str {
+    $str.trans( [ rx{'&amp;'}, rx{'&lt;'}, rx{'&gt;'}, rx{'&quot;'}, rx{'&#39;'} ] =>
+                [ q{&},        q{<},       q{>},       q{"},         q{'}        ] );
+}
+
+
 sub visit($root, :&pre, :&post, :&assemble = -> *%{ Nil }) {
     my ($pre, $post);
     $pre = pre($root) if defined &pre;
@@ -424,7 +430,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                 # if we have an internal-only link, strip the # from the text.
                 $text = $/.postmatch
             }
-            $url = url($url);
+            $url = url(unescape_html($url));
             if $url ~~ /^'#'/ {
                 $url = '#' ~ uri_escape($/.postmatch)
             }
