@@ -448,19 +448,15 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         when 'X' {
             # TODO do something with the crossrefs
             my $text = node2inline($node.content);
-            my $defn = $text;
+            my $defns = $text;
             if $text ~~ /'|'/ {
-                $defn = $/.postmatch;
+                $defns = $/.postmatch;
                 $text = $/.prematch;
             }
-            my @hierdefn = $defn.split(/\s*','\s*/);
-            if +@hierdefn > 1 {
-                $defn = @hierdefn.join("--")
-            } else {
-                $defn = @hierdefn[0]
-            }
-            %crossrefs{$defn} = $text;
-            return qq[<span name="$defn">$text\</span>];
+            my @indices = $defns.split(/\s*';'\s*/).map:
+                { .split(/\s*','\s*/).join("--") }
+            %crossrefs{$_} = $text for @indices;
+            return qq[<span name="@indices[]">$text\</span>];
         }
 
         # Stuff I haven't figured out yet
