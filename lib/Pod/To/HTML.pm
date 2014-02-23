@@ -41,6 +41,9 @@ sub unescape_html(Str $str) returns Str {
                 [ q{&},        q{<},       q{>},       q{"},         q{'}        ] );
 }
 
+sub escape_id ($id) {
+    $id.subst(/\s+/, '_', :g);
+}
 
 sub visit($root, :&pre, :&post, :&assemble = -> *%{ Nil }) {
     my ($pre, $post);
@@ -338,12 +341,13 @@ multi sub node2html(Pod::Heading $node) returns Str {
     Debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
-        uri => uri_escape(node2rawtext($node.content)),
+        id => escape_id(node2rawtext($node.content)),
         html => node2inline($node.content),
     );
+
     @indexes.push: Pair.new(key => $lvl, value => %escaped);
 
-    return sprintf('<h%d id="%s">', $lvl, %escaped<uri>)
+    return sprintf('<h%d id="%s">', $lvl, %escaped<id>)
                 ~ qq[<a class="u" href="#___top" title="go to top of document">]
                     ~ %escaped<html>
                 ~ qq[</a>]
@@ -432,7 +436,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             }
             $url = url(unescape_html($url));
             if $url ~~ /^'#'/ {
-                $url = '#' ~ uri_escape($/.postmatch)
+                $url = '#' ~ uri_escape( escape_id($/.postmatch) )
             }
             return qq[<a href="$url">{$text}</a>]
         }
