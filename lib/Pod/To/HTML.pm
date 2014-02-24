@@ -349,6 +349,8 @@ multi sub node2html(Pod::Heading $node) returns Str {
         html => node2inline($node.content),
     );
 
+    %escaped<uri> = uri_escape %escaped<id>;
+
     @indexes.push: Pair.new(key => $lvl, value => %escaped);
 
     return sprintf('<h%d id="%s">', $lvl, %escaped<id>)
