@@ -417,7 +417,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                     { q{&} ~ $_ ~ q{;} }
                 # Uppercase = Unicode codepoint names
                 default
-                    { q{<kbd class="pod2html-todo">E&lt;} ~ node2text($_) ~ q{&gt;</kbd>} }
+                    { escape_html(chr(nqp::codepointfromname($_))) }
             }).join;
         }
 
