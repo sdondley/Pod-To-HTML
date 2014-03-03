@@ -410,8 +410,12 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         when 'E' {
             return $node.content.split(q{;}).map({
                 # Perl 6 numbers = Unicode codepoint numbers
-                when /^ \d+ $/
-                    { q{&#} ~ $_ ~ q{;} }
+                when /^ '0d'? <(\d+)> $/
+                    { q{&#} ~ $/ ~ q{;} }
+                when /^ '0x' <(<.xdigit>+)> $/
+                    { q{&#x} ~ $/ ~ q{;} }
+                when /^ '0o' <(\d+)> $/
+                    { q{&#} ~ :8(~$/) ~ q{;} }
                 # Lowercase = HTML5 entity reference
                 when /^ <[a..z]>+ $/
                     { q{&} ~ $_ ~ q{;} }
