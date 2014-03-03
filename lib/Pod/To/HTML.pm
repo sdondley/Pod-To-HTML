@@ -431,12 +431,9 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Links
         when 'L' {
-            my $url  = node2inline($node.content);
-            my $text = $url;
-            if $url ~~ /'|'/ {
-                $text = $/.prematch;
-                $url  = $/.postmatch;
-            } elsif $text ~~ /^'#'/ {
+            my $text = node2inline($node.content);
+            my $url  = $node.meta[0] // $text;
+            if $text ~~ /^'#'/ {
                 # if we have an internal-only link, strip the # from the text.
                 $text = $/.postmatch
             }
@@ -453,24 +450,17 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         }
 
         when 'D' {
-            # TODO memorise these definitions and display them properly
+            # TODO memorise these definitions (in $node.meta) and display them properly
             my $text = node2inline($node.content);
-            if $text ~~ /'|'/ {
-                $text = $/.prematch;
-            }
             return qq[<defn>{$text}</defn>]
         }
 
         when 'X' {
             # TODO do something with the crossrefs
             my $text = node2inline($node.content);
-            my $defns = $text;
-            if $text ~~ /'|'/ {
-                $defns = $/.postmatch;
-                $text = $/.prematch;
-            }
-            my @indices = $defns.split(/\s*';'\s*/).map:
-                { .split(/\s*','\s*/).join("--") }
+            my @indices = $node.meta;
+            # my @indices = $defns.split(/\s*';'\s*/).map:
+            #     { .split(/\s*','\s*/).join("--") }
             %crossrefs{$_} = $text for @indices;
             return qq[<span name="@indices[]">$text\</span>];
         }
