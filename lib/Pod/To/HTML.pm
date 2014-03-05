@@ -408,21 +408,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Escape
         when 'E' {
-            return $node.content.split(q{;}).map({
-                # Perl 6 numbers = Unicode codepoint numbers
-                when /^ '0d'? <(\d+)> $/
-                    { q{&#} ~ $/ ~ q{;} }
-                when /^ '0x' <(<.xdigit>+)> $/
-                    { q{&#x} ~ $/ ~ q{;} }
-                when /^ '0o' <(\d+)> $/
-                    { q{&#} ~ :8(~$/) ~ q{;} }
-                # Lowercase = HTML5 entity reference
-                when /^ <[a..z]>+ $/
-                    { q{&} ~ $_ ~ q{;} }
-                # Uppercase = Unicode codepoint names
-                default
-                    { escape_html(chr(nqp::codepointfromname($_))) }
-            }).join;
+            return escape_html($node.content.join);
         }
 
         #= Note
