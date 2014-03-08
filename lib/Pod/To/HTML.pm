@@ -208,12 +208,13 @@ sub twine2text($twine) returns Str {
 }
 
 #= block level or below
-multi sub node2html($node) returns Str {
+proto sub node2html(|) returns Str is export {*}
+multi sub node2html($node) {
     Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
     return node2inline($node);
 }
 
-multi sub node2html(Pod::Block::Declarator $node) returns Str {
+multi sub node2html(Pod::Block::Declarator $node) {
     given $node.WHEREFORE {
         when Sub {
             "<article>\n"
@@ -230,17 +231,17 @@ multi sub node2html(Pod::Block::Declarator $node) returns Str {
     }
 }
 
-multi sub node2html(Pod::Block::Code $node) returns Str {
+multi sub node2html(Pod::Block::Code $node) {
     Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
     return '<pre>' ~ node2inline($node.content) ~ "</pre>\n"
 }
 
-multi sub node2html(Pod::Block::Comment $node) returns Str {
+multi sub node2html(Pod::Block::Comment $node) {
     Debug { note colored("Comment node2html called for ", "bold") ~ $node.gist };
     return '';
 }
 
-multi sub node2html(Pod::Block::Named $node) returns Str {
+multi sub node2html(Pod::Block::Named $node) {
     Debug { note colored("Named Block node2html called for ", "bold") ~ $node.gist };
     given $node.name {
         when 'config' { return '' }
@@ -295,12 +296,12 @@ multi sub node2html(Pod::Block::Named $node) returns Str {
     }
 }
 
-multi sub node2html(Pod::Block::Para $node) returns Str {
+multi sub node2html(Pod::Block::Para $node) {
     Debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
     return '<p>' ~ node2inline($node.content) ~ "</p>\n";
 }
 
-multi sub node2html(Pod::Block::Table $node) returns Str {
+multi sub node2html(Pod::Block::Table $node) {
     Debug { note colored("Table node2html called for ", "bold") ~ $node.gist };
     my @r = '<table>';
 
@@ -334,14 +335,14 @@ multi sub node2html(Pod::Block::Table $node) returns Str {
     return @r.join("\n");
 }
 
-multi sub node2html(Pod::Config $node) returns Str {
+multi sub node2html(Pod::Config $node) {
     Debug { note colored("Config node2html called for ", "bold") ~ $node.perl };
     return '';
 }
 
 # TODO: would like some way to wrap these and the following content in a <section>; this might be
 # the same way we get lists working...
-multi sub node2html(Pod::Heading $node) returns Str {
+multi sub node2html(Pod::Heading $node) {
     Debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
@@ -361,19 +362,19 @@ multi sub node2html(Pod::Heading $node) returns Str {
 }
 
 # FIXME
-multi sub node2html(Pod::List $node) returns Str {
+multi sub node2html(Pod::List $node) {
     return '<ul>' ~ node2html($node.content) ~ "</ul>\n";
 }
-multi sub node2html(Pod::Item $node) returns Str {
+multi sub node2html(Pod::Item $node) {
     Debug { note colored("List Item node2html called for ", "bold") ~ $node.gist };
     return '<li>' ~ node2html($node.content) ~ "</li>\n";
 }
 
-multi sub node2html(Positional $node) returns Str {
+multi sub node2html(Positional $node) {
     return $node.map({ node2html($_) }).join
 }
 
-multi sub node2html(Str $node) returns Str {
+multi sub node2html(Str $node) {
     return escape_html($node);
 }
 
