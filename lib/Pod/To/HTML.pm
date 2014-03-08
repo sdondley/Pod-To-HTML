@@ -408,7 +408,10 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Escape
         when 'E' {
-            return escape_html($node.content.join);
+            return $node.meta.map({
+                when Int { "&#$_;" }
+                when Str { "&$_;"  }
+            }).join;
         }
 
         #= Note
