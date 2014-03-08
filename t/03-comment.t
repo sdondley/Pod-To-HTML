@@ -12,4 +12,4 @@ This isn't a comment
 =end pod
 
 $r = node2html $=pod[0];
-say $r ~~ ms/ ^ '<p>' 'This isn&#39;t a comment' '</p>' $ /;
+ok $r ~~ ms/ ^ '<p>' 'This isn&#39;t a comment' '</p>' $ /;

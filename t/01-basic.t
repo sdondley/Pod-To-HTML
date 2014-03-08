@@ -16,5 +16,4 @@ some text
 =end foo
 
 $r = node2html $=pod[1];
-ok $r ~~ ms/'<section>' '<h1>' foo '</h1>' '<p>' some text '</p>' '</section>'/
-say $r;
+ok $r ~~ ms/'<section>' '<h1>' foo '</h1>' '<p>' some text '</p>' '</section>'/;
