@@ -82,6 +82,8 @@ sub assemble-list-items(:@content, :$node, *% ) {
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '') is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
+    #= Keep count of how many footnotes we've output.
+    my Int $*done-notes = 0;
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
 
@@ -171,24 +173,19 @@ sub do-toc returns Str {
     return $r ~ '</nav>';
 }
 
-#= Keep count of how many footnotes we've output.
-my Int $done-notes = 0;
-
 #= Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
 #  before each C«</section>» tag (once we have those per-header) and have notes that are visually
 #  and semantically attached to the section.
 sub do-footnotes returns Str {
-    #state $done-notes = 0; # TODO 2011-09-07 Rakudo-nom bug
-
     return '' unless @footnotes;
 
-    my Int $current-note = $done-notes + 1;
+    my Int $current-note = $*done-notes + 1;
     my $notes = @footnotes.kv.map(-> $k, $v {
                     my $num = $k + $current-note;
                     qq{<li><a href="#fn-ref-$num" id="fn-$num">[↑]</a> $v </li>\n}
                 }).join;
 
-    $done-notes += @footnotes;
+    $*done-notes += @footnotes;
     @footnotes = ();
 
     return qq[<aside><ol start="$current-note">\n]
