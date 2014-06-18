@@ -80,14 +80,14 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #= Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '') is export returns Str {
+sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title) is export returns Str {
     ($title, @meta, @indexes, @body, @footnotes) = ();
     #= Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
 
-    my $title_html = $title // 'Pod document';
+    my $title_html = $title // $default-title;
 
     my $prelude = qq:to/END/;
         <!doctype html>
