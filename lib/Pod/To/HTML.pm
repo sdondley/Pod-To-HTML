@@ -273,11 +273,7 @@ multi sub node2html(Pod::Block::Named $node) {
             return qq[<img src="$url" />];
         }
         when 'Xhtml' | 'Html' {
-            if $node.content[0].content[] >>~~>> Str {
-                return $node.content[0].content[].join
-            } else {
-                die "Found an $node.name() block, but don't know how to extract the HTML :(";
-            }
+            unescape_html node2html $node.content
         }
         default {
             if $node.name eq 'TITLE' {
