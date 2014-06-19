@@ -20,6 +20,7 @@ method render($pod) {
 
 my &url;
 my $title;
+my $desc;
 my @meta;
 my @indexes;
 my @body;
@@ -81,7 +82,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 #= Converts a Pod tree to a HTML document.
 sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title) is export returns Str {
-    ($title, @meta, @indexes, @body, @footnotes) = ();
+    ($title, $desc, @meta, @indexes, @body, @footnotes) = ();
     #= Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
@@ -123,7 +124,9 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
 
     return join(qq{\n},
         $prelude,
-        ( $title.defined ?? "<h1>{$title_html}</h1>"
+        ( $title.defined ?? "<h1 class='title'>{$title_html}</h1>"
+                         !! () ),
+        ( $desc.defined  ?? "<p class='desc'>{$desc}</p>"
                          !! () ),
         ( do-toc() // () ),
         @body,
@@ -278,6 +281,10 @@ multi sub node2html(Pod::Block::Named $node) {
         default {
             if $node.name eq 'TITLE' {
                 $title = node2text($node.content);
+                return '';
+            }
+            if $node.name eq 'DESCRIPTION' {
+                $desc = node2text($node.content);
                 return '';
             }
             elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
