@@ -433,7 +433,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         #= Links
         when 'L' {
             my $text = node2inline($node.content);
-            my $url  = $node.meta[0] // $text;
+            my $url  = $node.meta[0] // node2text($node.content);
             if $text ~~ /^'#'/ {
                 # if we have an internal-only link, strip the # from the text.
                 $text = $/.postmatch
