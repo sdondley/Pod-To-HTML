@@ -152,7 +152,7 @@ sub do-toc returns Str {
     my @opened;
     for @indexes -> $p {
         my $lvl  = $p.key;
-        my %head = $p.value;
+        my $head = $p.value;
         while @opened && @opened[*-1] > $lvl {
             $r ~= $indent x @opened - 1
                 ~ "</ol>\n";
@@ -166,7 +166,7 @@ sub do-toc returns Str {
         }
         $r ~= $indent x $lvl
             ~ qq[<li class="indexItem indexItem{$lvl}">]
-            ~ qq[<a href="#{%head<uri>}">{%head<html>}</a></li>\n];
+            ~ qq[<a href="#{$head<uri>}">{$head<html>}</a></li>\n];
     }
     for ^@opened {
         $r ~= $indent x @opened - 1 - $^left
