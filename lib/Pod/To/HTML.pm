@@ -495,6 +495,16 @@ multi sub node2text(Pod::Block::Para $node) returns Str {
     return node2text($node.content);
 }
 
+multi sub node2text(Pod::Raw $node) {
+    my $t = $node.target;
+    if $t && lc($t) eq 'html' {
+        $node.content;
+    }
+    else {
+        '';
+    }
+}
+
 # FIXME: a lot of these multis are identical except the function name used...
 #        there has to be a better way to write this?
 multi sub node2text(Positional $node) returns Str {
