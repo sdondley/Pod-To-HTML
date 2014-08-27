@@ -495,10 +495,10 @@ multi sub node2text(Pod::Block::Para $node) returns Str {
     return node2text($node.contents);
 }
 
-multi sub node2text(Pod::Raw $node) {
+multi sub node2text(Pod::Raw $node) returns Str {
     my $t = $node.target;
     if $t && lc($t) eq 'html' {
-        $node.contents;
+        $node.contents.join
     }
     else {
         '';
