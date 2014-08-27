@@ -49,7 +49,7 @@ sub escape_id ($id) {
 sub visit($root, :&pre, :&post, :&assemble = -> *%{ Nil }) {
     my ($pre, $post);
     $pre = pre($root) if defined &pre;
-    my @content = $root.?content.map: {visit $_, :&pre, :&post, :&assemble};
+    my @content = $root.?contents.map: {visit $_, :&pre, :&post, :&assemble};
     $post = post($root, :@content) if defined &post;
     return assemble(:$pre, :$post, :@content, :node($root));
 }
@@ -66,7 +66,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
             $found = True;
         }
         elsif @current {
-            @result.push: Pod::List.new(content => @current);
+            @result.push: Pod::List.new(contents => @current);
             @current = ();
             @result.push: $c;
         }
@@ -74,9 +74,9 @@ sub assemble-list-items(:@content, :$node, *% ) {
             @result.push: $c;
         }
     }
-    @result.push: Pod::List.new(content => @current) if @current;
+    @result.push: Pod::List.new(contents => @current) if @current;
     @current = ();
-    return $found ?? $node.clone(content => @result) !! $node;
+    return $found ?? $node.clone(contents => @result) !! $node;
 }
 
 
@@ -201,7 +201,7 @@ sub twine2text($twine) returns Str {
     return '' unless $twine.elems;
     my $r = $twine[0];
     for $twine[1..*] -> $f, $s {
-        $r ~= twine2text($f.content);
+        $r ~= twine2text($f.contents);
         $r ~= $s;
     }
     return $r;
@@ -221,19 +221,19 @@ multi sub node2html(Pod::Block::Declarator $node) {
                 ~ '<code>'
                     ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
                 ~ "</code>:\n"
-                ~ node2html($node.content)
+                ~ node2html($node.contents)
             ~ "\n</article>\n";
         }
         default {
             Debug { note "I don't know what {$node.WHEREFORE.perl} is" };
-            node2html([$node.WHEREFORE.perl, q{: }, $node.content]);
+            node2html([$node.WHEREFORE.perl, q{: }, $node.contents]);
         }
     }
 }
 
 multi sub node2html(Pod::Block::Code $node) {
     Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
-    return '<pre>' ~ node2inline($node.content) ~ "</pre>\n"
+    return '<pre>' ~ node2inline($node.contents) ~ "</pre>\n"
 }
 
 multi sub node2html(Pod::Block::Comment $node) {
@@ -246,28 +246,28 @@ multi sub node2html(Pod::Block::Named $node) {
     given $node.name {
         when 'config' { return '' }
         when 'nested' {
-            return qq{<div class="nested">\n} ~ node2html($node.content) ~ qq{\n</div>\n};
+            return qq{<div class="nested">\n} ~ node2html($node.contents) ~ qq{\n</div>\n};
         }
-        when 'output' { return "<pre>\n" ~ node2inline($node.content) ~ "</pre>\n"; }
+        when 'output' { return "<pre>\n" ~ node2inline($node.contents) ~ "</pre>\n"; }
         when 'pod'  {
-            return qq[<span class="{$node.config<class>}">\n{node2html($node.content)}</span>\n]
+            return qq[<span class="{$node.config<class>}">\n{node2html($node.contents)}</span>\n]
                 if $node.config<class>;
-            return node2html($node.content);
+            return node2html($node.contents);
         }
-        when 'para' { return node2html($node.content[0]); }
+        when 'para' { return node2html($node.contents[0]); }
         when 'defn' {
-            return node2html($node.content[0]) ~ "\n"
-                    ~ node2html($node.content[1..*-1]);
+            return node2html($node.contents[0]) ~ "\n"
+                    ~ node2html($node.contents[1..*-1]);
         }
         when 'Image' {
             my $url;
-            if $node.content == 1 {
-                my $n = $node.content[0];
+            if $node.contents == 1 {
+                my $n = $node.contents[0];
                 if $n ~~ Str {
                     $url = $n;
                 }
-                elsif ($n ~~ Pod::Block::Para) &&  $n.content == 1 {
-                    $url = $n.content[0] if $n.content[0] ~~ Str;
+                elsif ($n ~~ Pod::Block::Para) &&  $n.contents == 1 {
+                    $url = $n.contents[0] if $n.contents[0] ~~ Str;
                 }
             }
             unless $url.defined {
@@ -276,28 +276,28 @@ multi sub node2html(Pod::Block::Named $node) {
             return qq[<img src="$url" />];
         }
         when 'Xhtml' | 'Html' {
-            unescape_html node2html $node.content
+            unescape_html node2html $node.contents
         }
         default {
             if $node.name eq 'TITLE' {
-                $title = node2text($node.content);
+                $title = node2text($node.contents);
                 return '';
             }
             if $node.name eq 'SUBTITLE' {
-                $subtitle = node2text($node.content);
+                $subtitle = node2text($node.contents);
                 return '';
             }
             elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
-              and $node.content[0] ~~ Pod::Block::Para {
+              and $node.contents[0] ~~ Pod::Block::Para {
                 @meta.push: Pair.new(
                     key => $node.name.lc,
-                    value => $node.content
+                    value => $node.contents
                 );
             }
 
             return '<section>'
                 ~ "<h1>{$node.name}</h1>\n"
-                ~ node2html($node.content)
+                ~ node2html($node.contents)
                 ~ "</section>\n";
         }
     }
@@ -305,7 +305,7 @@ multi sub node2html(Pod::Block::Named $node) {
 
 multi sub node2html(Pod::Block::Para $node) {
     Debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
-    return '<p>' ~ node2inline($node.content) ~ "</p>\n";
+    return '<p>' ~ node2inline($node.contents) ~ "</p>\n";
 }
 
 multi sub node2html(Pod::Block::Table $node) {
@@ -328,7 +328,7 @@ multi sub node2html(Pod::Block::Table $node) {
 
     @r.push(
         '<tbody>',
-        $node.content.map(-> $line {
+        $node.contents.map(-> $line {
             '<tr>',
             $line.list.map(-> $cell {
                 "<td>{node2html($cell)}</td>"
@@ -353,8 +353,8 @@ multi sub node2html(Pod::Heading $node) {
     Debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
-        id => escape_id(node2rawtext($node.content)),
-        html => node2inline($node.content),
+        id => escape_id(node2rawtext($node.contents)),
+        html => node2inline($node.contents),
     );
 
     %escaped<uri> = uri_escape %escaped<id>;
@@ -370,11 +370,11 @@ multi sub node2html(Pod::Heading $node) {
 
 # FIXME
 multi sub node2html(Pod::List $node) {
-    return '<ul>' ~ node2html($node.content) ~ "</ul>\n";
+    return '<ul>' ~ node2html($node.contents) ~ "</ul>\n";
 }
 multi sub node2html(Pod::Item $node) {
     Debug { note colored("List Item node2html called for ", "bold") ~ $node.gist };
-    return '<li>' ~ node2html($node.content) ~ "</li>\n";
+    return '<li>' ~ node2html($node.contents) ~ "</li>\n";
 }
 
 multi sub node2html(Positional $node) {
@@ -393,7 +393,7 @@ multi sub node2inline($node) returns Str {
 }
 
 multi sub node2inline(Pod::Block::Para $node) returns Str {
-    return node2inline($node.content);
+    return node2inline($node.contents);
 }
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
@@ -410,7 +410,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
     given $node.type {
         when any(%basic-html.keys) {
             return q{<} ~ %basic-html{$_} ~ q{>}
-                ~ node2inline($node.content)
+                ~ node2inline($node.contents)
                 ~ q{</} ~ %basic-html{$_} ~ q{>};
         }
 
@@ -424,7 +424,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Note
         when 'N' {
-            @footnotes.push(node2inline($node.content));
+            @footnotes.push(node2inline($node.contents));
 
             my $id = +@footnotes;
             return qq{<a href="#fn-$id" id="fn-ref-$id">[$id]</a>};
@@ -432,8 +432,8 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         #= Links
         when 'L' {
-            my $text = node2inline($node.content);
-            my $url  = $node.meta[0] // node2text($node.content);
+            my $text = node2inline($node.contents);
+            my $url  = $node.meta[0] // node2text($node.contents);
             if $text ~~ /^'#'/ {
                 # if we have an internal-only link, strip the # from the text.
                 $text = $/.postmatch
@@ -452,13 +452,13 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
 
         when 'D' {
             # TODO memorise these definitions (in $node.meta) and display them properly
-            my $text = node2inline($node.content);
+            my $text = node2inline($node.contents);
             return qq[<defn>{$text}</defn>]
         }
 
         when 'X' {
             # TODO do something with the crossrefs
-            my $text = node2inline($node.content);
+            my $text = node2inline($node.contents);
             my @indices = $node.meta;
             # my @indices = $defns.split(/\s*';'\s*/).map:
             #     { .split(/\s*','\s*/).join("--") }
@@ -470,7 +470,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         default {
             Debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
             return qq{<kbd class="pod2html-todo">$node.type()&lt;}
-                    ~ node2inline($node.content)
+                    ~ node2inline($node.contents)
                     ~ q{&gt;</kbd>};
         }
     }
@@ -492,13 +492,13 @@ multi sub node2text($node) returns Str {
 }
 
 multi sub node2text(Pod::Block::Para $node) returns Str {
-    return node2text($node.content);
+    return node2text($node.contents);
 }
 
 multi sub node2text(Pod::Raw $node) {
     my $t = $node.target;
     if $t && lc($t) eq 'html' {
-        $node.content;
+        $node.contents;
     }
     else {
         '';
@@ -524,7 +524,7 @@ multi sub node2rawtext($node) returns Str {
 
 multi sub node2rawtext(Pod::Block $node) returns Str {
     Debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
-    return twine2text($node.content);
+    return twine2text($node.contents);
 }
 
 multi sub node2rawtext(Positional $node) returns Str {
