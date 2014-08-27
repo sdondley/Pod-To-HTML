@@ -88,7 +88,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
 
-    my $title_html = $title // $default-title;
+    my $title_html = $title // $default-title // '';
 
     my $prelude = qq:to/END/;
         <!doctype html>
