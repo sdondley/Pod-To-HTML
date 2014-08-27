@@ -80,10 +80,10 @@ sub assemble-list-items(:@content, :$node, *% ) {
 }
 
 
-#= Converts a Pod tree to a HTML document.
+#| Converts a Pod tree to a HTML document.
 sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title) is export returns Str {
     ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
-    #= Keep count of how many footnotes we've output.
+    #| Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
     @body.push: node2html($pod.map: {visit $_, :assemble(&assemble-list-items)});
@@ -137,14 +137,14 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
     );
 }
 
-#= Returns accumulated metadata as a string of C«<meta>» tags
+#| Returns accumulated metadata as a string of C«<meta>» tags
 sub do-metadata returns Str {
     return @meta.map(-> $p {
         qq[<meta name="{escape_html($p.key)}" value="{node2text($p.value)}" />]
     }).join("\n");
 }
 
-#= Turns accumulated headings into a nested-C«<ol>» table of contents
+#| Turns accumulated headings into a nested-C«<ol>» table of contents
 sub do-toc returns Str {
     my $r = qq[<nav class="indexgroup">\n];
 
@@ -176,9 +176,9 @@ sub do-toc returns Str {
     return $r ~ '</nav>';
 }
 
-#= Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
-#  before each C«</section>» tag (once we have those per-header) and have notes that are visually
-#  and semantically attached to the section.
+#| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
+#| before each C«</section>» tag (once we have those per-header) and have notes that are visually
+#| and semantically attached to the section.
 sub do-footnotes returns Str {
     return '' unless @footnotes;
 
@@ -207,7 +207,7 @@ sub twine2text($twine) returns Str {
     return $r;
 }
 
-#= block level or below
+#| block level or below
 proto sub node2html(|) returns Str is export {*}
 multi sub node2html($node) {
     Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
@@ -386,7 +386,7 @@ multi sub node2html(Str $node) {
 }
 
 
-#= inline level or below
+#| inline level or below
 multi sub node2inline($node) returns Str {
     Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
     return node2text($node);
@@ -414,7 +414,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                 ~ q{</} ~ %basic-html{$_} ~ q{>};
         }
 
-        #= Escape
+        # Escape
         when 'E' {
             return $node.meta.map({
                 when Int { "&#$_;" }
@@ -422,7 +422,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             }).join;
         }
 
-        #= Note
+        # Note
         when 'N' {
             @footnotes.push(node2inline($node.contents));
 
@@ -430,7 +430,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             return qq{<a href="#fn-$id" id="fn-ref-$id">[$id]</a>};
         }
 
-        #= Links
+        # Links
         when 'L' {
             my $text = node2inline($node.contents);
             my $url  = $node.meta[0] // node2text($node.contents);
@@ -485,7 +485,7 @@ multi sub node2inline(Str $node) returns Str {
 }
 
 
-#= HTML-escaped text
+#| HTML-escaped text
 multi sub node2text($node) returns Str {
     Debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
     return escape_html(node2rawtext($node));
@@ -516,7 +516,7 @@ multi sub node2text(Str $node) returns Str {
 }
 
 
-#= plain, unescaped text
+#| plain, unescaped text
 multi sub node2rawtext($node) returns Str {
     Debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
     return $node.Str;
