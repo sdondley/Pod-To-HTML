@@ -216,7 +216,7 @@ multi sub node2html($node) {
 
 multi sub node2html(Pod::Block::Declarator $node) {
     given $node.WHEREFORE {
-        when Sub {
+        when Routine {
             "<article>\n"
                 ~ '<code>'
                     ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
@@ -224,22 +224,6 @@ multi sub node2html(Pod::Block::Declarator $node) {
                 ~ node2html($node.contents)
             ~ "\n</article>\n";
         }
-	when Method {
-	    "<article>\n"
-                ~ '<code>'
-                    ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
-                ~ "</code>:\n"
-                ~ node2html($node.contents)
-            ~ "\n</article>\n";
-	}
-	when Submethod {
-	    "<article>\n"
-                ~ '<code>'
-                    ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
-                ~ "</code>:\n"
-                ~ node2html($node.contents)
-            ~ "\n</article>\n";
-	}	
         default {
             Debug { note "I don't know what {$node.WHEREFORE.WHAT.perl} is. Assuming class..." };
 	    "<h1>"~ node2html([$node.WHEREFORE.perl, q{: }, $node.contents])~ "</h1>";            
