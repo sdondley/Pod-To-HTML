@@ -224,9 +224,25 @@ multi sub node2html(Pod::Block::Declarator $node) {
                 ~ node2html($node.contents)
             ~ "\n</article>\n";
         }
+	when Method {
+	    "<article>\n"
+                ~ '<code>'
+                    ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
+                ~ "</code>:\n"
+                ~ node2html($node.contents)
+            ~ "\n</article>\n";
+	}
+	when Submethod {
+	    "<article>\n"
+                ~ '<code>'
+                    ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
+                ~ "</code>:\n"
+                ~ node2html($node.contents)
+            ~ "\n</article>\n";
+	}	
         default {
-            Debug { note "I don't know what {$node.WHEREFORE.perl} is" };
-            node2html([$node.WHEREFORE.perl, q{: }, $node.contents]);
+            Debug { note "I don't know what {$node.WHEREFORE.WHAT.perl} is. Assuming class..." };
+	    "<h1>"~ node2html([$node.WHEREFORE.perl, q{: }, $node.contents])~ "</h1>";            
         }
     }
 }
