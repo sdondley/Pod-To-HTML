@@ -46,7 +46,7 @@ sub escape_id ($id) {
     $id.subst(/\s+/, '_', :g);
 }
 
-sub visit($root, :&pre, :&post, :&assemble = -> *%{ Nil }) {
+sub visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
     my ($pre, $post);
     $pre = pre($root) if defined &pre;
     my @content = $root.?contents.map: {visit $_, :&pre, :&post, :&assemble};
