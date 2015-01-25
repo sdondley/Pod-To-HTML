@@ -534,3 +534,5 @@ multi sub node2rawtext(Positional $node) returns Str {
 multi sub node2rawtext(Str $node) returns Str {
     return $node;
 }
+
+# vim: expandtab shiftwidth=4 ft=perl6
