@@ -233,11 +233,10 @@ multi sub node2html(Pod::Block::Declarator $node) {
 
 multi sub node2html(Pod::Block::Code $node) {
     Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
-    my %cbs := %*POD2HTML-CALLBACKS;
-    if %cbs &&  %cbs<code> -> &cb {
+    if %*POD2HTML-CALLBACKS and %*POD2HTML-CALLBACKS<code> -> &cb {
         return cb :$node, default => sub ($node) {
             return '<pre>' ~ node2inline($node.contents) ~ "</pre>\n"
-        };
+        }
     }
     else  {
         return '<pre>' ~ node2inline($node.contents) ~ "</pre>\n"
