@@ -1,6 +1,6 @@
 use Test;
 use Pod::To::HTML;
-plan 2;
+plan 3;
 my $r;
 
 =begin pod
@@ -40,3 +40,10 @@ This is a code block</pre>'
 '</a>' '</h1>'
 '<p>' 'Suprisingly, this is not a code block (with fancy indentation too)' '</p>'
 '<p>' 'But this is just a text. Again' '</p>']];
+
+my %*POD2HTML-CALLBACKS = code => sub (:$node, :&default) {
+    ok $node.contents ~~ /:i code/, 'Callback called';
+}
+
+say $=pod[0].perl;
+pod2html $=pod[0];
