@@ -51,7 +51,6 @@ multi visit(Nil, |a) {
 } 
 multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
     Debug { note colored("visit called for ", "bold") ~ $root.perl }
-    return unless $root;
     my ($pre, $post);
     $pre = pre($root) if defined &pre;
     
