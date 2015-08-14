@@ -67,7 +67,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
     my $foundone = False;
     my $everwarn = False;
 
-    my $atlevel;
+    my $atlevel = 0;
     my @pushalias;
 
     my sub oodwarn($got, $want) {
@@ -90,17 +90,23 @@ sub assemble-list-items(:@content, :$node, *% ) {
                 }
             }
 
-            # guaranteed to be bound to a Pod::List (see above 'unless')
-            @pushalias := @newcont[*-1].contents;
+            # only bother doing the binding business if we're at a different
+            # level than previous items
+            if $_.level != $atlevel {
+                # guaranteed to be bound to a Pod::List (see above 'unless')
+                @pushalias := @newcont[*-1].contents;
 
-            for 2..($_.level) -> $L {
-                unless +@pushalias && @pushalias[*-1] ~~ Pod::List {
-                    @pushalias.push(Pod::List.new());
-                    if +@pushalias == 1 { # we had to push a sublist to a list with no =items
-                        oodwarn($OUTER::_.level, $L);
+                for 2..($_.level) -> $L {
+                    unless +@pushalias && @pushalias[*-1] ~~ Pod::List {
+                        @pushalias.push(Pod::List.new());
+                        if +@pushalias == 1 { # we had to push a sublist to a list with no =items
+                            oodwarn($OUTER::_.level, $L);
+                        }
                     }
+                    @pushalias := @pushalias[*-1].contents;
                 }
-                @pushalias := @pushalias[*-1].contents;
+
+                $atlevel = $_.level;
             }
 
             @pushalias.push($_);
@@ -108,6 +114,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
         default {
             @newcont.push($_);
+            $atlevel = 0;
         }
     }
 
