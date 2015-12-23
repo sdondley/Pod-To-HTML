@@ -7,7 +7,5 @@ X<|behavior> L<http://www.doesnt.get.rendered.com>
 =end pod
 
 my $r = pod2html $=pod, :url({ $_ });
-# Temporarily commenting this out because failing 
-# ok $r ~~ m/'href="http://www.doesnt.get.rendered.com"'/;
-ok True;
+ok $r ~~ m/'href="http://www.doesnt.get.rendered.com"'/;
 
