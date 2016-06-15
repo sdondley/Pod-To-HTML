@@ -123,7 +123,9 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #| Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title) is export returns Str {
+sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title, 
+  :$css-url = '//design.perl6.org/perl.css'
+) is export returns Str {
     ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
     #| Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
@@ -157,7 +159,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
             aside, u \{ opacity: 0.7 }
             a[id^="fn-"]:target \{ background: #ff0 }
           </style>
-          <link rel="stylesheet" href="//design.perl6.org/perl.css">
+          <link rel="stylesheet" href="$css-url">
           { do-metadata() // () }
           $head
         </head>
