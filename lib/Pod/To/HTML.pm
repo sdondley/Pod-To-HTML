@@ -499,14 +499,19 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         }
 
         when 'X' {
-            # TODO do something with the crossrefs
-            my $text = node2inline($node.contents);
+            multi sub recurse-until-str(Str:D $s){ $s }
+            multi sub recurse-until-str(Pod::Block $n){ $n.contents>>.&recurse-until-str().join }
+            
+            my $index-text = recurse-until-str($node).join;
             my @indices = $node.meta;
-            # my @indices = $defns.split(/\s*';'\s*/).map:
-            #     { .split(/\s*','\s*/).join("--") }
+            my $index-name-attr = qq[index-entry{@indices ?? '-' !! ''}{@indices.join('-')}{$index-text ?? '-' !! ''}$index-text].subst('_', '__', :g).subst(' ', '_', :g).subst('%', '%25', :g).subst('#', '%23', :g);
+            # note "«$index-name-attr» «{$node.perl}»";
+            
+            my $text = node2inline($node.contents);
             %crossrefs{$_} = $text for @indices;
-            return qq[<a name="@indices[]"><span class="index-entry">$text\</span></a>] if $text;
-            return qq[<a name="@indices[]"></a>];
+            
+            return qq[<a name="$index-name-attr"><span class="index-entry">$text\</span></a>] if $text;
+            return qq[<a name="$index-name-attr"></a>];
         }
 
         # Stuff I haven't figured out yet
