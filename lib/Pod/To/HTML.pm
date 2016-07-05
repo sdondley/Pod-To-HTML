@@ -505,7 +505,8 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             # my @indices = $defns.split(/\s*';'\s*/).map:
             #     { .split(/\s*','\s*/).join("--") }
             %crossrefs{$_} = $text for @indices;
-            return qq[<span name="@indices[]">$text\</span>];
+            return qq[<a name="@indices[]"></a><span class="index-entry">$text\</span>] if $text;
+            return qq[<a name="@indices[]"></a>];
         }
 
         # Stuff I haven't figured out yet
