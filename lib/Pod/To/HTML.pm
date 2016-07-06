@@ -173,7 +173,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
                          !! () ),
         ( $subtitle.defined  ?? "<p class='subtitle'>{$subtitle}</p>"
                          !! () ),
-        ( do-toc() // () ),
+        ( do-toc($pod) // () ),
         @body,
         do-footnotes(),
         $footer,
@@ -190,35 +190,37 @@ sub do-metadata returns Str {
 }
 
 #| Turns accumulated headings into a nested-C«<ol>» table of contents
-sub do-toc returns Str {
-    my $r = qq[<nav class="indexgroup">\n];
-
-    my $indent = q{ } x 2;
-    my @opened;
-    for @indexes -> $p {
-        my $lvl  = $p.key;
-        my $head = $p.value;
-        while @opened && @opened[*-1] > $lvl {
-            $r ~= $indent x @opened - 1
-                ~ "</ol>\n";
-            @opened.pop;
-        }
-        my $last = @opened[*-1] // 0;
-        if $last < $lvl {
-            $r ~= $indent x $last
-                ~ qq[<ol class="indexList indexList{$lvl}">\n];
-            @opened.push($lvl);
-        }
-        $r ~= $indent x $lvl
-            ~ qq[<li class="indexItem indexItem{$lvl}">]
-            ~ qq[<a href="#{$head<uri>}">{$head<html>}</a></li>\n];
+sub do-toc($pod) returns Str {
+    my @levels is default(0) = 0;
+    my proto sub find-headings($node, :$inside-heading){*}
+    multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim !! '' }
+    multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
+        '<code>' ~ $node.contents.map(*.&find-headings(:$inside-heading)) ~ '</code>'
     }
-    for ^@opened {
-        $r ~= $indent x @opened - 1 - $^left
-            ~ "</ol>\n";
+    multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
+        @levels.splice($node.level) if $node.level < +@levels;
+        @levels[$node.level-1]++;
+        my $level-hierarchy = @levels.join('.'); # e.g. §4.2.12
+        my $text = $node.contents.map(*.&find-headings(inside-heading => True));
+        my $link = escape_id(node2text($node.contents));
+        qq[<tr class="toc-level-{$node.level}"><td class="toc-number">{$level-hierarchy}</td><td class="toc-text"><a href="#$link">{$text}</a></td></tr>\n];
+    }
+    multi sub find-headings(Positional \list, :$inside-heading){
+        list.map(*.&find-headings(:$inside-heading))
+    }
+    multi sub find-headings(Pod::Block $node is raw, :$inside-heading){
+        $node.contents.map(*.&find-headings(:$inside-heading))
+    }
+    multi sub find-headings(Pod::Raw $node is raw, :$inside-heading){
+        $node.contents.map(*.&find-headings(:$inside-heading))
     }
 
-    return $r ~ '</nav>';
+qq[
+<nav class="indexgroup"><table id="TOC">
+<caption><h2 id="TOC_Title">Table of Contents</h2></caption>
+{find-headings($pod)}
+</table></nav>
+]
 }
 
 #| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
@@ -505,7 +507,6 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
             my $index-text = recurse-until-str($node).join;
             my @indices = $node.meta;
             my $index-name-attr = qq[index-entry{@indices ?? '-' !! ''}{@indices.join('-')}{$index-text ?? '-' !! ''}$index-text].subst('_', '__', :g).subst(' ', '_', :g).subst('%', '%25', :g).subst('#', '%23', :g);
-            # note "«$index-name-attr» «{$node.perl}»";
             
             my $text = node2inline($node.contents);
             %crossrefs{$_} = $text for @indices;
