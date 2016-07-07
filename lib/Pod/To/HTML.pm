@@ -195,7 +195,8 @@ sub do-toc($pod) returns Str {
     my proto sub find-headings($node, :$inside-heading){*}
     multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim !! '' }
     multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
-        '<code>' ~ $node.contents.map(*.&find-headings(:$inside-heading)) ~ '</code>'
+        my $html = $node.contents.map(*.&find-headings(:$inside-heading));
+       $inside-heading ?? "<code>{$html}</code>" !! ''
     }
     multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
         @levels.splice($node.level) if $node.level < +@levels;
