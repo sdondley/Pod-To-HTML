@@ -196,7 +196,7 @@ sub do-toc($pod) returns Str {
     multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim !! '' }
     multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
         my $html = $node.contents.map(*.&find-headings(:$inside-heading));
-       $inside-heading ?? "<code>{$html}</code>" !! ''
+       $inside-heading ?? "<code class="pod-code-inline">{$html}</code>" !! ''
     }
     multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
         @levels.splice($node.level) if $node.level < +@levels;
@@ -260,7 +260,7 @@ multi sub node2html(Pod::Block::Declarator $node) {
     given $node.WHEREFORE {
         when Routine {
             "<article>\n"
-                ~ '<code>'
+                ~ '<code class="pod-code-inline">'
                     ~ node2text($node.WHEREFORE.name ~ $node.WHEREFORE.signature.perl)
                 ~ "</code>:\n"
                 ~ node2html($node.contents)
@@ -277,11 +277,11 @@ multi sub node2html(Pod::Block::Code $node) {
     Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
     if %*POD2HTML-CALLBACKS and %*POD2HTML-CALLBACKS<code> -> &cb {
         return cb :$node, default => sub ($node) {
-            return '<pre>' ~ node2inline($node.contents) ~ "</pre>\n"
+            return '<pre class="pod-block-code">' ~ node2inline($node.contents) ~ "</pre>\n"
         }
     }
     else  {
-        return '<pre>' ~ node2inline($node.contents) ~ "</pre>\n"
+        return '<pre class="pod-block-code">' ~ node2inline($node.contents) ~ "</pre>\n"
     }
 
 }
@@ -298,7 +298,7 @@ multi sub node2html(Pod::Block::Named $node) {
         when 'nested' {
             return qq{<div class="nested">\n} ~ node2html($node.contents) ~ qq{\n</div>\n};
         }
-        when 'output' { return "<pre>\n" ~ node2inline($node.contents) ~ "</pre>\n"; }
+        when 'output' { return "<pre class="pod-block-named-outout">\n" ~ node2inline($node.contents) ~ "</pre>\n"; }
         when 'pod'  {
             return qq[<span class="{$node.config<class>}">\n{node2html($node.contents)}</span>\n]
                 if $node.config<class>;
