@@ -216,12 +216,17 @@ sub do-toc($pod) returns Str {
         $node.contents.map(*.&find-headings(:$inside-heading))
     }
 
-qq[
-<nav class="indexgroup"><table id="TOC">
-<caption><h2 id="TOC_Title">Table of Contents</h2></caption>
-{find-headings($pod)}
-</table></nav>
-]
+    my $html = find-headings($pod);
+    $html.trim ??
+        qq:to/EOH/
+        <nav class="indexgroup">
+        <table id="TOC">
+        <caption><h2 id="TOC_Title">Table of Contents</h2></caption>
+        {$html}
+        </table>
+        </nav>
+        EOH
+    !! ''
 }
 
 #| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
