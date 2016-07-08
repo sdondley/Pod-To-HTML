@@ -173,8 +173,8 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
                          !! () ),
         ( $subtitle.defined  ?? "<p class='subtitle'>{$subtitle}</p>"
                          !! () ),
-        ( do-toc($pod) // () ),
-        '<div class="pod-body">,@body,'</div>',
+        ( my $ToC := do-toc($pod) // () ),
+        '<div class="pod-body', ($ToC ?? '' !! ' no-toc'), '">',@body,'</div>',
         do-footnotes(),
         $footer,
         '</body>',
