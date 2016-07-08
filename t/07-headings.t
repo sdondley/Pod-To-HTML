@@ -10,7 +10,7 @@ plan 3;
 
 =head2 Heading 1.1
 
-=head3 Heading 1.1.1
+=head2 Heading 1.2
 
 =head1 Heading 2
 
@@ -27,6 +27,8 @@ plan 3;
 =end pod
 
 my $html = pod2html $=pod;
+
+put $html;
 
 ($html ~~ m:g/ ('2.2.2') /);
 
