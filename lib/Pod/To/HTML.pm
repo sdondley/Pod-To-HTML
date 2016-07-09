@@ -10,6 +10,10 @@ sub colored($text, $how) {
     $text
 }
 
+multi method render($pod) {
+    pod2html($pod)
+}
+
 multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '') {
     pod2html($pod, :$header, :$footer, :$head, :$default-title)
 }
