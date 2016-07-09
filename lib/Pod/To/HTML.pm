@@ -10,8 +10,13 @@ sub colored($text, $how) {
     $text
 }
 
-method render($pod) {
-    pod2html($pod)
+multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '') {
+    pod2html($pod, :$header, :$footer, :$head, :$default-title)
+}
+
+multi method render(IO::Path $file, Str $header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '') {
+    use MONKEY-SEE-NO-EVAL;
+    pod2html(EVAL($file.slurp ~ "\n\$=pod"), :$header, :$footer, :$head, :$default-title);
 }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
