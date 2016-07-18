@@ -14,6 +14,10 @@ multi method render($pod) {
     pod2html($pod)
 }
 
+multi method render(Array $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '') {
+    pod2html($pod, :$header, :$footer, :$head, :$default-title)
+}
+
 multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '') {
     pod2html($pod, :$header, :$footer, :$head, :$default-title)
 }
@@ -225,6 +229,9 @@ sub do-toc($pod) returns Str {
     }
     multi sub find-headings(Pod::Block $node is raw, :$inside-heading){
         $node.contents.map(*.&find-headings(:$inside-heading))
+    }
+    multi sub find-headings(Pod::Config $node, :$inside-heading){
+        ''
     }
     multi sub find-headings(Pod::Raw $node is raw, :$inside-heading){
         $node.contents.map(*.&find-headings(:$inside-heading))
