@@ -22,6 +22,7 @@ say Pod::To::HTML.render('your/file.pod'.IO,
                          header => "your-custom-header-inside-body", 
                          footer => "your-custom-footer-inside-body", 
                          head-fields => "tags-inside-head", 
+                         lang        => "document language (defaults to 'en')",
                          default-title = 'No =title was found so we use this');
 
 #Pod string
@@ -34,6 +35,7 @@ say Pod::To::HTML.render($pod,
                          header => "your-custom-header-inside-body", 
                          footer => "your-custom-footer-inside-body", 
                          head-fields => "tags-inside-head", 
+			 lang        => "document language (defaults to 'en')",
                          default-title = 'No =title was found so we use this');
 ```
 
