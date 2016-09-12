@@ -45,7 +45,7 @@ my @body;
 my @footnotes;
 my %crossrefs;
 
- sub Debug(Callable $)  { }         # Disable debug code
+sub Debug(Callable $)  { }         # Disable debug code
 #sub Debug(Callable $c) { $c() }    # Enable debug code
 
 sub escape_html(Str $str) returns Str {
@@ -327,8 +327,11 @@ multi sub node2html(Pod::Block::Named $node) {
         }
         when 'para' { return node2html($node.contents[0]); }
         when 'defn' {
-            return node2html($node.contents[0]) ~ "\n"
-                    ~ node2html($node.contents[1..*-1]);
+            return "<dl>" ~
+                    "<dt>" ~ node2html($node.contents[0].contents[1]) ~ "</dt>" ~
+                    "<dd>" ~ node2html($node.contents[0].contents[2..*-1]) ~ "</dd>" ~
+                "</dl>\n" ~
+                node2html($node.contents[1..*-1]);
         }
         when 'Image' {
             my $url;
