@@ -181,7 +181,8 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
           { do-metadata() // () }
           $head
         </head>
-        <body class="pod" id="___top">
+        <body class="pod">
+        <div id="___top"></div>
         $header
         END
 
