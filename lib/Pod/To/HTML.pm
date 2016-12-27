@@ -384,8 +384,8 @@ multi sub node2html(Pod::Block::Table $node) {
     Debug { note colored("Table node2html called for ", "bold") ~ $node.gist };
     my @r = '<table class="pod-table">';
 
-    if $node.caption {
-        @r.push("<caption>{node2inline($node.caption)}</caption>");
+    if $node.config<caption> -> $c {
+        @r.push("<caption>{node2inline($c)}</caption>");
     }
 
     if $node.headers {
