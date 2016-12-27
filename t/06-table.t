@@ -75,6 +75,6 @@ ok $r ~~ ms[[
           '<td>' col1 '</td>'
           '<td>' col2 '</td>'
         '</tr>'
-      '</tbody>' 
+      '</tbody>'
     '</table>'
 ]];
