@@ -348,7 +348,7 @@ multi sub node2html(Pod::Block::Named $node) {
             return qq[<img src="$url" />];
         }
         when 'Xhtml' | 'Html' {
-            unescape_html $node.contents.map({node2html 'raw', $_}).join
+            unescape_html node2rawhtml $node.contents
         }
         default {
             if $node.name eq 'TITLE' {
@@ -375,9 +375,8 @@ multi sub node2html(Pod::Block::Named $node) {
     }
 }
 
-multi sub node2html('raw', Pod::Block::Para $node) {
-    Debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
-    return node2inline($node.contents);
+sub node2rawhtml(Positional $node) {
+    return $node.map({ $_.contents }).join
 }
 
 multi sub node2html(Pod::Block::Para $node) {
