@@ -214,14 +214,14 @@ sub do-toc($pod) returns Str {
     my proto sub find-headings($node, :$inside-heading){*}
     multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim !! '' }
     multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
-        my $html = $node.contents.map(*.&find-headings(:$inside-heading));
+        my $html = $node.contents.map(*.&find-headings(:$inside-heading)).Str.&escape_html;
        $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
     }
     multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
         @levels.splice($node.level) if $node.level < +@levels;
         @levels[$node.level-1]++;
         my $level-hierarchy = @levels.join('.'); # e.g. §4.2.12
-        my $text = $node.contents.map(*.&find-headings(inside-heading => True));
+        my $text = $node.contents.map(*.&find-headings(inside-heading => True)).Str.&escape_html;
         my $link = escape_id(node2text($node.contents));
         qq[<tr class="toc-level-{$node.level}"><td class="toc-number">{$level-hierarchy}</td><td class="toc-text"><a href="#$link">{$text}</a></td></tr>\n];
     }
