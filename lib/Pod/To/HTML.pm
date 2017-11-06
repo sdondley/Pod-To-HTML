@@ -221,7 +221,7 @@ sub do-toc($pod) returns Str {
         @levels.splice($node.level) if $node.level < +@levels;
         @levels[$node.level-1]++;
         my $level-hierarchy = @levels.join('.'); # e.g. §4.2.12
-        my $text = $node.contents.map(*.&find-headings(inside-heading => True));
+        my $text = $node.contents.map(*.&find-headings(inside-heading => True)).Str.&escape_html;
         my $link = escape_id(node2text($node.contents));
         qq[<tr class="toc-level-{$node.level}"><td class="toc-number">{$level-hierarchy}</td><td class="toc-text"><a href="#$link">{$text}</a></td></tr>\n];
     }
