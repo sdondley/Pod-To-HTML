@@ -214,7 +214,7 @@ sub do-toc($pod) returns Str {
     my proto sub find-headings($node, :$inside-heading){*}
     multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim !! '' }
     multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
-        my $html = $node.contents.map(*.&find-headings(:$inside-heading));
+        my $html = $node.contents.map(*.&find-headings(:$inside-heading)).Str.&escape_html;
        $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
     }
     multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
