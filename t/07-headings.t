@@ -30,7 +30,7 @@ plan 3;
 
 my $html = pod2html $=pod;
 
-put $html;
+#put $html;
 
 ($html ~~ m:g/ ('2.2.2') /);
 
