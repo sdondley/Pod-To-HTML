@@ -446,6 +446,7 @@ multi sub node2html(Pod::Heading $node) {
 	~ %escaped<html>
 	~ qq[</a>];
     }
+
     return sprintf('<h%d id="%s">', $lvl, %escaped<id>)
                 ~ $content ~ qq[</h{$lvl}>\n];
 }
