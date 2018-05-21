@@ -37,8 +37,8 @@ say Pod::To::HTML.render($pod,
                          header => "your-custom-header-inside-body",
                          footer => "your-custom-footer-inside-body",
                          head-fields => "tags-inside-head",
-			 lang        => "document language (defaults to 'en')",
-                         default-title = 'No =title was found so we use this');
+			             lang        => "document language (defaults to 'en')",
+                         default-title => 'No =title was found so we use this');
 ```
 
 ## DESCRIPTION
@@ -56,3 +56,6 @@ You can set `P6DOC_DEBUG` environmental variable to make the module produce some
 You can use and distribute this module under the terms of the The Artistic License 2.0. See the LICENSE file included in this distribution for complete details.
 
 The META6.json file of this distribution may be distributed and modified without restrictions or attribution.
+
+
+
