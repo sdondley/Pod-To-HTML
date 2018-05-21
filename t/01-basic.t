@@ -17,3 +17,8 @@ some text
 
 $r = node2html $=pod[1];
 ok $r ~~ ms/'<section>' '<h1>' foo '</h1>' '<p>' some text '</p>' '</section>'/;
+
+=head1 Talking about Perl 6
+
+$r = node2html $=pod[2];
+nok $r ~~ ms/Perl 6/;
