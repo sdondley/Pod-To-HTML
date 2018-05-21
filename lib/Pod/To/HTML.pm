@@ -50,10 +50,10 @@ my  $DEBUG := %*ENV<P6DOC_DEBUG>;
 sub Debug(Callable $c) { $c() if $DEBUG; }
 
 sub escape_html(Str $str) returns Str {
-    return $str unless $str ~~ /<[&<>"']>/;
+    return $str unless $str ~~ /<[&<>"'{ ]>/;
 
-    $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'}     ] =>
-                [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;} ] );
+    $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'},     q{ }     ] =>
+                [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;}, q{&nbsp;}]);
 }
 
 sub unescape_html(Str $str) returns Str {
