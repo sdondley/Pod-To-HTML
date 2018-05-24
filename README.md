@@ -51,6 +51,7 @@ The other route is with the `render` method (called by `--doc=HTML`), which crea
 
 You can set the `P6DOC_DEBUG` environmental variable to make the module produce some debugging information.
 
+
 ## LICENSE
 
 You can use and distribute this module under the terms of the The Artistic License 2.0. See the LICENSE file included in this distribution for complete details.
