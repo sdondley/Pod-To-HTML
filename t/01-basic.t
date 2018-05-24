@@ -1,6 +1,6 @@
 use Test;
 use Pod::To::HTML;
-plan 2;
+plan 3;
 my $r;
 
 # XXX Need a module to walk HTML trees
