@@ -50,9 +50,8 @@ my  $DEBUG := %*ENV<P6DOC_DEBUG>;
 sub Debug(Callable $c) { $c() if $DEBUG; }
 
 sub escape_html(Str $str) returns Str {
-    return $str unless $str ~~ /<[&<>"'{ ]>/;
-
-    $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'},     q{ }     ] =>
+  return $str unless ( $str ~~ /<[ & < > " ' {   ]>/ ) or ( $str ~~ / ' ' / );
+  $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'},     q{ }     ] =>
                 [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;}, q{&nbsp;}]);
 }
 
@@ -470,12 +469,12 @@ multi sub node2html(Str $node) {
 
 #| inline level or below
 multi sub node2inline($node) returns Str {
-    Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
-    return node2text($node);
+  Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
+  return node2text($node);
 }
 
 multi sub node2inline(Pod::Block::Para $node) returns Str {
-    return node2inline($node.contents);
+  return node2inline($node.contents);
 }
 
 multi sub node2inline(Pod::FormattingCode $node) returns Str {
@@ -563,11 +562,11 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
     }
 }
 
-multi sub node2inline(Positional $node) returns Str {
+  multi sub node2inline(Positional $node) returns Str {
     return $node.map({ node2inline($_) }).join;
 }
 
-multi sub node2inline(Str $node) returns Str {
+  multi sub node2inline(Str $node) returns Str {
     return escape_html($node);
 }
 
