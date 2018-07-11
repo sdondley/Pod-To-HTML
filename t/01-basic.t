@@ -19,8 +19,14 @@ ok $r ~~ ms/'<section>' '<h1>' foo '</h1>' '<p>' some text '</p>' '</section>'/;
 
 =head1 Talking about Perl 6
 
-$r = node2html $=pod[2];
-nok $r ~~ m:s/Perl 6/, "no-break space is not converted to other space";
+if  $*PERL.compiler.name eq 'rakudo'
+and $*PERL.compiler.version before v2018.06 {
+    skip "Your rakudo is too old for this test. Need 2018.06 or newer";
+}
+else {
+    $r = node2html $=pod[2];
+    nok $r ~~ m:s/Perl 6/, "no-break space is not converted to other space";
+}
 
 sub twrap($text is copy, :$wrap=75 ) {
     $text ~~ s:g/(. ** {$wrap} <[\s]>*)\s+/$0\n/;
