@@ -485,7 +485,7 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
         K => 'kbd',     #= Keyboard
         R => 'var',     #= Replaceable
         T => 'samp',    #= Terminal
-        U => 'u',       #= Unusual
+        U => 'u',       #= Unusual (css: text-decoration-line: underline)
     );
 
     given $node.type {
