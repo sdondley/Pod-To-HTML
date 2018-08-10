@@ -61,7 +61,10 @@ sub unescape_html(Str $str) returns Str {
 }
 
 sub escape_id ($id) {
-    $id.trim.subst(/\s+/, '_', :g).subst('"', '&quot;', :g);
+    $id.trim.subst(/\s+/, '_', :g)
+      .subst('"', '&quot;', :g)
+      .subst('&nbsp;', '_', :g)
+      .subst('&#39;', "'", :g);
 }
 
 multi visit(Nil, |a) {
@@ -209,36 +212,40 @@ sub do-metadata returns Str {
 
 #| Turns accumulated headings into a nested-C«<ol>» table of contents
 sub do-toc($pod) returns Str {
-  my @levels is default(0) = 0;
-  
-  my proto sub find-headings($node, :$inside-heading){*}
-  
-  multi sub find-headings(Str $s is raw, :$inside-heading){
-    $inside-heading ?? $s.trim.&escape_html !! ''
-  }
-  
-  multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
-    my $html = $node.contents.map(*.&find-headings(:$inside-heading));
-    $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
-  }
-  
-  multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
-        @levels.splice($node.level) if $node.level < +@levels;
-        @levels[$node.level-1]++;
+    my @levels is default(0) = 0;
+
+    my proto sub find-headings($node, :$inside-heading){*}
+
+    multi sub find-headings(Str $s is raw, :$inside-heading){
+      $inside-heading ?? $s.trim.&escape_html !! ''
+    }
+
+    multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
+      my $html = $node.contents.map(*.&find-headings(:$inside-heading));
+      $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
+    }
+
+    multi sub find-headings(Pod::Heading $node is raw, :$inside-heading) {
+      @levels.splice($node.level) if $node.level < +@levels;
+      @levels[$node.level-1]++;
         my $level-hierarchy = @levels.join('.'); # e.g. §4.2.12
         my $text = $node.contents.map(*.&find-headings(inside-heading => True));
         my $link = escape_id(node2text($node.contents));
         qq[<tr class="toc-level-{$node.level}"><td class="toc-number">{$level-hierarchy}</td><td class="toc-text"><a href="#$link">{$text}</a></td></tr>\n];
     }
+
     multi sub find-headings(Positional \list, :$inside-heading){
         list.map(*.&find-headings(:$inside-heading))
     }
+
     multi sub find-headings(Pod::Block $node is raw, :$inside-heading){
         $node.contents.map(*.&find-headings(:$inside-heading))
     }
+
     multi sub find-headings(Pod::Config $node, :$inside-heading){
         ''
     }
+
     multi sub find-headings(Pod::Raw $node is raw, :$inside-heading){
         $node.contents.map(*.&find-headings(:$inside-heading))
     }
