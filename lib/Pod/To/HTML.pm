@@ -209,14 +209,20 @@ sub do-metadata returns Str {
 
 #| Turns accumulated headings into a nested-C«<ol>» table of contents
 sub do-toc($pod) returns Str {
-    my @levels is default(0) = 0;
-    my proto sub find-headings($node, :$inside-heading){*}
-    multi sub find-headings(Str $s is raw, :$inside-heading){ $inside-heading ?? $s.trim.&escape_html !! '' }
-    multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
-        my $html = $node.contents.map(*.&find-headings(:$inside-heading));
-       $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
-    }
-    multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
+  my @levels is default(0) = 0;
+  
+  my proto sub find-headings($node, :$inside-heading){*}
+  
+  multi sub find-headings(Str $s is raw, :$inside-heading){
+    $inside-heading ?? $s.trim.&escape_html !! ''
+  }
+  
+  multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading){
+    my $html = $node.contents.map(*.&find-headings(:$inside-heading));
+    $inside-heading ?? qq[<code class="pod-code-inline">{$html}</code>] !! ''
+  }
+  
+  multi sub find-headings(Pod::Heading $node is raw, :$inside-heading){
         @levels.splice($node.level) if $node.level < +@levels;
         @levels[$node.level-1]++;
         my $level-hierarchy = @levels.join('.'); # e.g. §4.2.12
