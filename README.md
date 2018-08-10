@@ -11,7 +11,7 @@ This module is in the [Perl 6 ecosystem](https://modules.perl6.org), so you inst
     zef install Pod::To::HTML
 
 **Note**: Perl 6 2018.06 introduces changes on how non-breaking
-  whitespace was handled; this is tested now in one of the tests. If
+  whitespace was handled; this is now included in the tests. If
   the installation fails, please upgrade to Perl 6 >= 2018.06 or
   simply disregard the test and install with `--force` if that
   particular feature is of no use to you.
@@ -59,11 +59,12 @@ say Pod::To::HTML.render($pod,
 
 ## DESCRIPTION
 
-`Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly formatted HTML.  
-Generally this is done via the command line, using`perl6 --doc=HTML`, which extracts the pod from the document and feeds it to `Pod::To::HTML`.  
-The other route is with the `render` method (called by `--doc=HTML`),
-which creates a complete HTML document from the Pod tree it is called
-with. 
+`Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly
+formatted HTML. Generally this is done via the command line,
+using`perl6 --doc=HTML`, which extracts the pod from the document and
+feeds it to `Pod::To::HTML`. The other route is with the `render`
+method (called by `--doc=HTML`), which creates a complete HTML
+document from the Pod tree it is called with.
 
 Optionally, a custom header/fooder/head-fields can be
 provided. These can be used to link to custom CSS stylesheets and
@@ -72,7 +73,8 @@ JavaScript libraries.
 
 ## DEBUGGING
 
-You can set the `P6DOC_DEBUG` environmental variable to make the module produce some debugging information.
+You can set the `P6DOC_DEBUG` environmental variable to make the
+module produce some debugging information. 
 
 
 ## LICENSE
