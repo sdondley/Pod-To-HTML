@@ -339,13 +339,6 @@ multi sub node2html(Pod::Block::Named $node) {
             return node2html($node.contents);
         }
         when 'para' { return node2html($node.contents[0]); }
-        when 'defn' {
-            return "<dl>" ~
-                    "<dt>" ~ node2html($node.contents[0].contents[1]) ~ "</dt>" ~
-                    "<dd>" ~ node2html($node.contents[0].contents[2..*-1]) ~ "</dd>" ~
-                "</dl>\n" ~
-                node2html($node.contents[1..*-1]);
-        }
         when 'Image' {
             my $url;
             if $node.contents == 1 {
@@ -436,6 +429,14 @@ multi sub node2html(Pod::Block::Table $node) {
 multi sub node2html(Pod::Config $node) {
     Debug { note colored("Config node2html called for ", "bold") ~ $node.perl };
     return '';
+}
+
+multi sub node2html(Pod::Defn $node) {
+
+            return "<dl>" ~
+                    "<dt>" ~ node2html($node.term) ~ "</dt>" ~
+                    "<dd>" ~ node2html($node.contents) ~ "</dd>" ~
+                "</dl>\n";
 }
 
 # TODO: would like some way to wrap these and the following content in a <section>; this might be
