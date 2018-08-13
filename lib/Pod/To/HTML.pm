@@ -47,6 +47,7 @@ my %crossrefs;
 
 # see <https://docs.perl6.org/language/traps#Constants_are_Compile_Time>
 my  $DEBUG := %*ENV<P6DOC_DEBUG>;
+
 sub Debug(Callable $c) { $c() if $DEBUG; }
 
 sub escape_html(Str $str) returns Str {
@@ -82,6 +83,9 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
 }
 
 class Pod::List is Pod::Block { };
+class Pod::DefnList is Pod::Block { };
+
+
 
 sub assemble-list-items(:@content, :$node, *% ) {
     my @newcont;
@@ -131,6 +135,15 @@ sub assemble-list-items(:@content, :$node, *% ) {
             }
 
             @pushalias.push($_);
+        }
+        # This is simpler than lists because we don't need to
+        # list
+        when Pod::Defn {
+            $foundone = True;
+            unless +@newcont && @newcont[*-1] ~~ Pod::DefnList {
+                @newcont.push(Pod::DefnList.new());
+            }
+            @newcont[*-1].contents.push($_);
         }
 
         default {
@@ -302,7 +315,7 @@ multi sub node2html(Pod::Block::Declarator $node) {
         }
         default {
             Debug { note "I don't know what {$node.WHEREFORE.WHAT.perl} is. Assuming class..." };
-	    "<h1>"~ node2html([$node.WHEREFORE.perl, q{: }, $node.contents])~ "</h1>";
+        "<h1>"~ node2html([$node.WHEREFORE.perl, q{: }, $node.contents])~ "</h1>";
         }
     }
 }
@@ -431,12 +444,14 @@ multi sub node2html(Pod::Config $node) {
     return '';
 }
 
+multi sub node2html(Pod::DefnList $node ) {
+    return "<dl>\n" ~ node2html($node.contents) ~ "\n</dl>\n";
+
+}
 multi sub node2html(Pod::Defn $node) {
 
-            return "<dl>" ~
-                    "<dt>" ~ node2html($node.term) ~ "</dt>" ~
-                    "<dd>" ~ node2html($node.contents) ~ "</dd>" ~
-                "</dl>\n";
+                    "<dt>" ~ node2html($node.term) ~ "</dt>\n" ~
+                    "<dd>" ~ node2html($node.contents) ~ "</dd>\n";
 }
 
 # TODO: would like some way to wrap these and the following content in a <section>; this might be
@@ -458,8 +473,8 @@ multi sub node2html(Pod::Heading $node) {
       $content =  %escaped<html>;
     } else {
       $content = qq[<a class="u" href="#___top" title="go to top of document">]
-	~ %escaped<html>
-	~ qq[</a>];
+    ~ %escaped<html>
+    ~ qq[</a>];
     }
 
     return sprintf('<h%d id="%s">', $lvl, %escaped<id>)
