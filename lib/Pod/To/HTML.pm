@@ -138,7 +138,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
         }
         # This is simpler than lists because we don't need to
         # list
-        when Pod::Defn {
+        when Pod::DefnList {
             $foundone = True;
             unless +@newcont && @newcont[*-1] ~~ Pod::DefnList {
                 @newcont.push(Pod::DefnList.new());
@@ -448,7 +448,7 @@ multi sub node2html(Pod::DefnList $node ) {
     return "<dl>\n" ~ node2html($node.contents) ~ "\n</dl>\n";
 
 }
-multi sub node2html(Pod::Defn $node) {
+multi sub node2html(Pod::DefnList $node) {
 
                     "<dt>" ~ node2html($node.term) ~ "</dt>\n" ~
                     "<dd>" ~ node2html($node.contents) ~ "</dd>\n";
