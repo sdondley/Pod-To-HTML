@@ -84,7 +84,7 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
 
 class Pod::List is Pod::Block { };
 class Pod::DefnList is Pod::Block { };
-
+BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
 
 
 sub assemble-list-items(:@content, :$node, *% ) {
