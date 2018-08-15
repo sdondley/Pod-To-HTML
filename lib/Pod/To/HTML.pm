@@ -83,7 +83,7 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
 }
 
 class Pod::List is Pod::Block { };
-class Pod::DefnList is Pod::Block { };
+class Pod::Defn is Pod::Block { };
 
 
 
@@ -138,10 +138,10 @@ sub assemble-list-items(:@content, :$node, *% ) {
         }
         # This is simpler than lists because we don't need to
         # list
-        when Pod::DefnList {
+        when Pod::Defn {
             $foundone = True;
-            unless +@newcont && @newcont[*-1] ~~ Pod::DefnList {
-                @newcont.push(Pod::DefnList.new());
+            unless +@newcont && @newcont[*-1] ~~ Pod::Defn {
+                @newcont.push(Pod::Defn.new());
             }
             @newcont[*-1].contents.push($_);
         }
@@ -444,11 +444,11 @@ multi sub node2html(Pod::Config $node) {
     return '';
 }
 
-multi sub node2html(Pod::DefnList $node ) {
+multi sub node2html(Pod::Defn $node ) {
     return "<dl>\n" ~ node2html($node.contents) ~ "\n</dl>\n";
 
 }
-multi sub node2html(Pod::DefnList $node) {
+multi sub node2html(Pod::Defn $node) {
 
                     "<dt>" ~ node2html($node.term) ~ "</dt>\n" ~
                     "<dd>" ~ node2html($node.contents) ~ "</dd>\n";
