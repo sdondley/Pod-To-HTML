@@ -550,10 +550,10 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
                   if $text ~~ /^'#'/ {
                                 # if we have an internal-only link, strip the # from the text.
                                 $text = $/.postmatch
-                               }
+                  }
                   if ! $text ~~ /^\?/ {
-                                       $url = url(unescape_html($url));
-                                      }
+                         $url = url(unescape_html($url));
+                  }
 
                   if $url ~~ /^'#'/ {
                                      $url = '#' ~ uri_escape( escape_id($/.postmatch) )
