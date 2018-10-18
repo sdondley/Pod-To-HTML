@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="{{ lang }}">
+    <head>
+        <title>{{ title }}</title>
+        <meta charset="UTF-8" />
+        <meta description="This is a new template"/>
+        <style>
+        /* code gets the browser-default font
+         * kbd gets a slightly less common monospace font
+         * samp gets the hard pixelly fonts
+         */
+        kbd { font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }
+        samp { font-family: "Terminus", "Courier", "Lucida Console", monospace }
+        /* WHATWG HTML frowns on the use of <u> because it looks like a link,
+         * so we make it not look like one.
+         */
+        u { text-decoration: none }
+        .nested {
+            margin-left: 3em;
+        }
+        // footnote things:
+        aside, u { opacity: 0.7 }
+        a[id^="fn-"]:target { background: #ff0 }
+        </style>
+        {{# css }}<link rel="stylesheet" href="{{ css }}">{{/ css }}
+        {{# metadata }}{{{ metadata }}}{{/ metadata }}
+        {{ head }}
+    </head>
+    <body class="pod">
+    <div id="___top"></div>
+    {{{ header }}}
+    {{# title }}<h1 class='title'>{{ title }}</h1>{{/ title }}
+    {{# subtitle }}<p class='subtitle'>{{ subtitle }}</p>{{/ subtitle }}
+    {{# toc }}{{{ toc }}}{{/ toc }}
+    <div class="pod-body{{^ toc }} no-toc{{/ toc }})">
+    {{# body }}{{{ . }}}{{/ body }}
+    </div>
+    {{# footnotes }}{{{ footnotes }}}{{/ footnotes }}
+    {{{ footer }}}
+    </body>
+</html>

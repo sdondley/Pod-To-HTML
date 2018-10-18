@@ -27,8 +27,3 @@ else {
     $r = node2html $=pod[2];
     nok $r ~~ m:s/Perl 6/, "no-break space is not converted to other space";
 }
-
-sub twrap($text is copy, :$wrap=75 ) {
-    $text ~~ s:g/(. ** {$wrap} <[\s]>*)\s+/$0\n/;
-    $text
-}

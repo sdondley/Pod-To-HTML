@@ -1,5 +1,6 @@
 unit class Pod::To::HTML;
 use URI::Escape;
+use Template::Mustache;
 
 #try require Term::ANSIColor <&colored>;
 #if &colored.defined {
@@ -71,6 +72,7 @@ sub escape_id ($id) {
 multi visit(Nil, |a) {
     Debug { note colored("visit called for Nil", "bold") }
 }
+
 multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
     Debug { note colored("visit called for ", "bold") ~ $root.perl }
     my ($pre, $post);
@@ -85,7 +87,6 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
 class Pod::List is Pod::Block { };
 class Pod::DefnList is Pod::Block { };
 BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
-
 
 sub assemble-list-items(:@content, :$node, *% ) {
     my @newcont;
@@ -157,17 +158,48 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #| Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title,
-  :$css-url = '//design.perl6.org/perl.css', :$lang = 'en',
+sub pod2html(
+    $pod,
+    :&url = -> $url { $url },
+    :$head = '',
+    :$header = '',
+    :$footer = '',
+    :$default-title,
+    :$css-url = '//design.perl6.org/perl.css',
+    :$templates,
+    :$lang = 'en'
     --> Str ) is export {
+
+    my $template-dir = 'resources/templates';
+     if "$templates/main.mustache".IO ~~ :f {
+         $template-dir = $templates
+     }
+     else {
+        note "$templates does not contain required templates. Using default templates.";        
+    }
     ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
     #| Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
     @body.push: node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
-
     my $title_html = $title // $default-title // '';
 
+    my Template::Mustache $main-tm .= new;
+    return $main-tm.render( "$template-dir/main.mustache".IO.slurp, :literal, (
+        :$lang,
+        :title($title_html),
+        :$subtitle,
+        :css($css-url),
+        :meta( do-metadata ),
+        :$head,
+        :toc( do-toc($pod) ),
+        :$header,
+        :@body,
+        :footnotes( do-footnotes ),
+        :$footer).hash
+    );
+
+=comment out
     my $prelude = qq:to/END/;
         <!doctype html>
         <html lang="$lang">
@@ -200,7 +232,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
         <div id="___top"></div>
         $header
         END
-
+=comment out
     return join(qq{\n},
         $prelude,
         ( $title.defined ?? "<h1 class='title'>{$title_html}</h1>"
@@ -214,11 +246,12 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
         '</body>',
         "</html>\n"
     );
+
 }
 
 #| Returns accumulated metadata as a string of C«<meta>» tags
-sub do-metadata ( --> Str ) {
-    return @meta.map(-> $p {
+sub do-metadata(  --> Str ) {
+    return +@meta ?? '' !! @meta.map(-> $p {
         qq[<meta name="{escape_html($p.key)}" value="{node2text($p.value)}" />]
     }).join("\n");
 }
@@ -279,7 +312,7 @@ sub do-toc($pod --> Str ) {
 #| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
 #| before each C«</section>» tag (once we have those per-header) and have notes that are visually
 #| and semantically attached to the section.
-sub do-footnotes ( --> Str ) {
+sub do-footnotes(  --> Str ) {
     return '' unless @footnotes;
 
     my Int $current-note = $*done-notes + 1;
