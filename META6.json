@@ -5,6 +5,7 @@
     "description" : "Convert Perl 6 Pod to HTML",
     "license"     : "Artistic-2.0",
     "depends"     : ["URI"],
+    "test-depends" : ["Test::Output"],
     "provides"    : {
         "Pod::To::HTML" : "lib/Pod/To/HTML.pm"
     },
