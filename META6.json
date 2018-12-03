@@ -11,6 +11,6 @@
     },
     "resources": [
         "templates/main.mustache"
-    ]
+    ],
     "source-url"  : "git://github.com/perl6/Pod-To-HTML.git"
 }
