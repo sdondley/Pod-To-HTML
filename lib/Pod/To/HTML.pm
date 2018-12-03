@@ -166,16 +166,18 @@ sub pod2html(
     :$footer = '',
     :$default-title,
     :$css-url = '//design.perl6.org/perl.css',
-    :$templates,
+    :$templates = Str,
     :$lang = 'en'
     --> Str ) is export {
 
-    my $template-dir = 'resources/templates';
-     if "$templates/main.mustache".IO ~~ :f {
-         $template-dir = $templates
-     }
-     else {
-        note "$templates does not contain required templates. Using default templates.";        
+    my $template-file = %?RESOURCES<templates/main.mustache>;
+     with $templates {
+         if  "$templates/main.mustache".IO ~~ :f {
+             $template-file = "$templates/main.mustache".IO
+         }
+         else {
+            note "$templates does not contain required templates. Using default.";
+        }
     }
     ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
     #| Keep count of how many footnotes we've output.
@@ -185,7 +187,7 @@ sub pod2html(
     my $title_html = $title // $default-title // '';
 
     my Template::Mustache $main-tm .= new;
-    return $main-tm.render( "$template-dir/main.mustache".IO.slurp, :literal, (
+    return $main-tm.render( $template-file.IO.slurp, :literal, (
         :$lang,
         :title($title_html),
         :$subtitle,

@@ -9,5 +9,8 @@
     "provides"    : {
         "Pod::To::HTML" : "lib/Pod/To/HTML.pm"
     },
+    "resources": [
+        "templates/main.mustache"
+    ]
     "source-url"  : "git://github.com/perl6/Pod-To-HTML.git"
 }
