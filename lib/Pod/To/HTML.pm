@@ -157,7 +157,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 }
 
 
-#| Converts a Pod tree to a HTML document.
+#| Converts a Pod tree to a HTML document using templates
 sub pod2html(
     $pod,
     :&url = -> $url { $url },
