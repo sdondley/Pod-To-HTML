@@ -1,5 +1,6 @@
 unit class Pod::To::HTML;
 use URI::Escape;
+use Template::Mustache;
 
 #try require Term::ANSIColor <&colored>;
 #if &colored.defined {
@@ -50,13 +51,13 @@ my  $DEBUG := %*ENV<P6DOC_DEBUG>;
 
 sub Debug(Callable $c) { $c() if $DEBUG; }
 
-sub escape_html(Str $str) returns Str {
+sub escape_html(Str $str --> Str ) {
   return $str unless ( $str ~~ /<[ & < > " ' {   ]>/ ) or ( $str ~~ / ' ' / );
   $str.trans( [ q{&},     q{<},    q{>},    q{"},      q{'},     q{ }     ] =>
                 [ q{&amp;}, q{&lt;}, q{&gt;}, q{&quot;}, q{&#39;}, q{&nbsp;}]);
 }
 
-sub unescape_html(Str $str) returns Str {
+sub unescape_html(Str $str --> Str ) {
     $str.trans( [ rx{'&amp;'}, rx{'&lt;'}, rx{'&gt;'}, rx{'&quot;'}, rx{'&#39;'} ] =>
                 [ q{&},        q{<},       q{>},       q{"},         q{'}        ] );
 }
@@ -71,6 +72,7 @@ sub escape_id ($id) {
 multi visit(Nil, |a) {
     Debug { note colored("visit called for Nil", "bold") }
 }
+
 multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
     Debug { note colored("visit called for ", "bold") ~ $root.perl }
     my ($pre, $post);
@@ -85,7 +87,6 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
 class Pod::List is Pod::Block { };
 class Pod::DefnList is Pod::Block { };
 BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
-
 
 sub assemble-list-items(:@content, :$node, *% ) {
     my @newcont;
@@ -157,17 +158,50 @@ sub assemble-list-items(:@content, :$node, *% ) {
 
 
 #| Converts a Pod tree to a HTML document.
-sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$footer = '', :$default-title,
-  :$css-url = '//design.perl6.org/perl.css', :$lang = 'en',
-    ) is export returns Str {
+sub pod2html(
+    $pod,
+    :&url = -> $url { $url },
+    :$head = '',
+    :$header = '',
+    :$footer = '',
+    :$default-title,
+    :$css-url = '//design.perl6.org/perl.css',
+    :$templates = Str,
+    :$lang = 'en'
+    --> Str ) is export {
+
+    my $template-file = %?RESOURCES<templates/main.mustache>;
+     with $templates {
+         if  "$templates/main.mustache".IO ~~ :f {
+             $template-file = "$templates/main.mustache".IO
+         }
+         else {
+            note "$templates does not contain required templates. Using default.";
+        }
+    }
     ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
     #| Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
     @body.push: node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
-
     my $title_html = $title // $default-title // '';
 
+    my Template::Mustache $main-tm .= new;
+    return $main-tm.render( $template-file.IO.slurp, :literal, (
+        :$lang,
+        :title($title_html),
+        :$subtitle,
+        :css($css-url),
+        :meta( do-metadata ),
+        :$head,
+        :toc( do-toc($pod) ),
+        :$header,
+        :@body,
+        :footnotes( do-footnotes ),
+        :$footer).hash
+    );
+
+=comment out
     my $prelude = qq:to/END/;
         <!doctype html>
         <html lang="$lang">
@@ -200,7 +234,7 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
         <div id="___top"></div>
         $header
         END
-
+=comment out
     return join(qq{\n},
         $prelude,
         ( $title.defined ?? "<h1 class='title'>{$title_html}</h1>"
@@ -214,17 +248,18 @@ sub pod2html($pod, :&url = -> $url { $url }, :$head = '', :$header = '', :$foote
         '</body>',
         "</html>\n"
     );
+
 }
 
 #| Returns accumulated metadata as a string of C«<meta>» tags
-sub do-metadata returns Str {
-    return @meta.map(-> $p {
+sub do-metadata(  --> Str ) {
+    return +@meta ?? '' !! @meta.map(-> $p {
         qq[<meta name="{escape_html($p.key)}" value="{node2text($p.value)}" />]
     }).join("\n");
 }
 
 #| Turns accumulated headings into a nested-C«<ol>» table of contents
-sub do-toc($pod) returns Str {
+sub do-toc($pod --> Str ) {
     my @levels is default(0) = 0;
 
     my proto sub find-headings($node, :$inside-heading){*}
@@ -279,7 +314,7 @@ sub do-toc($pod) returns Str {
 #| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
 #| before each C«</section>» tag (once we have those per-header) and have notes that are visually
 #| and semantically attached to the section.
-sub do-footnotes returns Str {
+sub do-footnotes(  --> Str ) {
     return '' unless @footnotes;
 
     my Int $current-note = $*done-notes + 1;
@@ -297,7 +332,7 @@ sub do-footnotes returns Str {
 }
 
 #| block level or below
-proto sub node2html(|) returns Str is export {*}
+proto sub node2html(| --> Str ) is export {*}
 multi sub node2html($node) {
     Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
     return node2inline($node);
@@ -500,16 +535,16 @@ multi sub node2html(Str $node) {
 
 
 #| inline level or below
-multi sub node2inline($node) returns Str {
+multi sub node2inline($node --> Str ) {
   Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
   return node2text($node);
 }
 
-multi sub node2inline(Pod::Block::Para $node) returns Str {
+multi sub node2inline(Pod::Block::Para $node --> Str ) {
   return node2inline($node.contents);
 }
 
-multi sub node2inline(Pod::FormattingCode $node) returns Str {
+multi sub node2inline(Pod::FormattingCode $node --> Str ) {
     my %basic-html = (
         B => 'strong',  #= Basis
         C => 'code',    #= Code
@@ -594,26 +629,26 @@ multi sub node2inline(Pod::FormattingCode $node) returns Str {
     }
 }
 
-  multi sub node2inline(Positional $node) returns Str {
+  multi sub node2inline(Positional $node --> Str ) {
     return $node.map({ node2inline($_) }).join;
 }
 
-  multi sub node2inline(Str $node) returns Str {
+  multi sub node2inline(Str $node --> Str ) {
     return escape_html($node);
 }
 
 
 #| HTML-escaped text
-multi sub node2text($node) returns Str {
+multi sub node2text($node --> Str ) {
     Debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
     return escape_html(node2rawtext($node));
 }
 
-multi sub node2text(Pod::Block::Para $node) returns Str {
+multi sub node2text(Pod::Block::Para $node --> Str ) {
     return node2text($node.contents);
 }
 
-multi sub node2text(Pod::Raw $node) returns Str {
+multi sub node2text(Pod::Raw $node --> Str ) {
     my $t = $node.target;
     if $t && lc($t) eq 'html' {
         $node.contents.join
@@ -625,31 +660,31 @@ multi sub node2text(Pod::Raw $node) returns Str {
 
 # FIXME: a lot of these multis are identical except the function name used...
 #        there has to be a better way to write this?
-multi sub node2text(Positional $node) returns Str {
+multi sub node2text(Positional $node --> Str ) {
     return $node.map({ node2text($_) }).join;
 }
 
-multi sub node2text(Str $node) returns Str {
+multi sub node2text(Str $node --> Str ) {
     return escape_html($node);
 }
 
 
 #| plain, unescaped text
-multi sub node2rawtext($node) returns Str {
+multi sub node2rawtext($node --> Str ) {
     Debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
     return $node.Str;
 }
 
-multi sub node2rawtext(Pod::Block $node) returns Str {
+multi sub node2rawtext(Pod::Block $node --> Str ) {
     Debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
     return node2rawtext($node.contents);
 }
 
-multi sub node2rawtext(Positional $node) returns Str {
+multi sub node2rawtext(Positional $node --> Str ) {
     return $node.map({ node2rawtext($_) }).join;
 }
 
-multi sub node2rawtext(Str $node) returns Str {
+multi sub node2rawtext(Str $node --> Str ) {
     return $node;
 }
 
