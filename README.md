@@ -65,7 +65,6 @@ say pod2html $=pod[0], :templates("lib/templates");
 
 
 ```
-
 ## DESCRIPTION
 
 `Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly
@@ -79,6 +78,9 @@ Optionally, a custom header/fooder/head-fields can be
 provided. These can be used to link to custom CSS stylesheets and
 JavaScript libraries.
 
+## Examples
+
+Check the [`examples`](resources/examples/README.md) directory (which should have been installed with your distribution, or is right here if you download from source) for a few illustrative examples.
 
 ## DEBUGGING
 
