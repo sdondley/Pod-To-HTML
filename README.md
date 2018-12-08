@@ -16,6 +16,10 @@ This module is in the [Perl 6 ecosystem](https://modules.perl6.org), so you inst
   simply disregard the test and install with `--force` if that
   particular feature is of no use to you.
 
+**Note**: Perl6 2018.11 introduced handling of Definition blocks,
+`Defn`. Please upgrade if you are using that feature in the
+documentation.
+
 ## SYNOPSIS
 
 From the command line:
@@ -54,6 +58,11 @@ say Pod::To::HTML.render($pod,
 	head-fields => "tags-inside-head",
     lang => "document language (defaults to 'en')",
 	default-title => 'No =title was found so we use this');
+
+# If you want to use a specific template 
+say pod2html $=pod[0], :templates("lib/templates");
+# main.mustache should be in that directory
+
 
 ```
 
