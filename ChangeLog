@@ -1,0 +1,4 @@
+2018-12-11  Juan J. merelo  <jmerelo@penny>
+
+	* META6.json: Bumps up to 0.4.1 after fixing the problem of URIzing titles and subtitles. 
+
