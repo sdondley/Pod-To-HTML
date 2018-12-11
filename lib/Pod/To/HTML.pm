@@ -199,56 +199,7 @@ sub pod2html(
         :@body,
         :footnotes( do-footnotes ),
         :$footer).hash
-    );
-
-=comment out
-    my $prelude = qq:to/END/;
-        <!doctype html>
-        <html lang="$lang">
-        <head>
-          <title>{ $title_html }</title>
-          <meta charset="UTF-8" />
-          <style>
-            /* code gets the browser-default font
-             * kbd gets a slightly less common monospace font
-             * samp gets the hard pixelly fonts
-             */
-            kbd \{ font-family: "Droid Sans Mono", "Luxi Mono", "Inconsolata", monospace }
-            samp \{ font-family: "Terminus", "Courier", "Lucida Console", monospace }
-            /* WHATWG HTML frowns on the use of <u> because it looks like a link,
-             * so we make it not look like one.
-             */
-            u \{ text-decoration: none }
-            .nested \{
-                margin-left: 3em;
-            }
-            // footnote things:
-            aside, u \{ opacity: 0.7 }
-            a[id^="fn-"]:target \{ background: #ff0 }
-          </style>
-          { qq|<link rel="stylesheet" href="$css-url">| if $css-url }
-          { do-metadata() // () }
-          $head
-        </head>
-        <body class="pod">
-        <div id="___top"></div>
-        $header
-        END
-=comment out
-    return join(qq{\n},
-        $prelude,
-        ( $title.defined ?? "<h1 class='title'>{$title_html}</h1>"
-                         !! () ),
-        ( $subtitle.defined  ?? "<p class='subtitle'>{$subtitle}</p>"
-                         !! () ),
-        ( my $ToC := do-toc($pod) // () ),
-        '<div class="pod-body', ($ToC ?? '' !! ' no-toc'), '">',@body,'</div>',
-        do-footnotes(),
-        $footer,
-        '</body>',
-        "</html>\n"
-    );
-
+    )
 }
 
 #| Returns accumulated metadata as a string of C«<meta>» tags
