@@ -16,6 +16,10 @@ This module is in the [Perl 6 ecosystem](https://modules.perl6.org), so you inst
   simply disregard the test and install with `--force` if that
   particular feature is of no use to you.
 
+**Note**: Perl6 2018.11 introduced handling of Definition blocks,
+`Defn`. Please upgrade if you are using that feature in the
+documentation.
+
 ## SYNOPSIS
 
 From the command line:
@@ -55,8 +59,12 @@ say Pod::To::HTML.render($pod,
     lang => "document language (defaults to 'en')",
 	default-title => 'No =title was found so we use this');
 
-```
+# If you want to use a specific template 
+say pod2html $=pod[0], :templates("lib/templates");
+# main.mustache should be in that directory
 
+
+```
 ## DESCRIPTION
 
 `Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly
@@ -70,6 +78,9 @@ Optionally, a custom header/fooder/head-fields can be
 provided. These can be used to link to custom CSS stylesheets and
 JavaScript libraries.
 
+## Examples
+
+Check the [`examples`](resources/examples/README.md) directory (which should have been installed with your distribution, or is right here if you download from source) for a few illustrative examples.
 
 ## DEBUGGING
 

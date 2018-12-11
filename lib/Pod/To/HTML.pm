@@ -157,7 +157,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
 }
 
 
-#| Converts a Pod tree to a HTML document.
+#| Converts a Pod tree to a HTML document using templates
 sub pod2html(
     $pod,
     :&url = -> $url { $url },
@@ -171,7 +171,7 @@ sub pod2html(
     --> Str ) is export {
 
     my $template-file = %?RESOURCES<templates/main.mustache>;
-     with $templates {
+    with $templates {
          if  "$templates/main.mustache".IO ~~ :f {
              $template-file = "$templates/main.mustache".IO
          }

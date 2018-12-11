@@ -1,10 +1,12 @@
-use Test;
+use Test; # -*- mode: perl6 -*- 
 use Test::Output;
 use Pod::To::HTML;
-plan 3;
+plan 5;
 my $r;
 
 =begin pod
+=TITLE The usual suspects
+
 The seven suspects are:
 
 =item  Happy
@@ -32,3 +34,9 @@ ok $r ~~ ms[[
 
 $r = pod2html $=pod[0], :templates("t/templates");
 ok $r ~~ ms[[  '<meta description="This is a new template"/>' ]], 'Gets text from new template';
+ok $r ~~ ms[[ "<h1 class='title'>The usual suspects</h1>" ]], 'Fills template correctly';
+
+my $head='<meta name=viewport content="width=device-width, initial-scale=1">';
+$r = pod2html $=pod[0], :templates("t/templates"), :$head ;
+ok $r ~~ ms[[ $head ]], 'headers are redered as is';
+
