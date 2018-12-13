@@ -28,7 +28,7 @@ say $=pod[0].perl;
 
 my $html = pod2html($=pod[0]);
 
-say $html;
+#say $html;
 ok $html ~~ ms[[
 '<dl>'
 '<dt>MAD</dt>'
