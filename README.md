@@ -16,7 +16,7 @@ This module is in the [Perl 6 ecosystem](https://modules.perl6.org), so you inst
   simply disregard the test and install with `--force` if that
   particular feature is of no use to you.
 
-**Note**: Perl6 2018.11 introduced handling of Definition blocks,
+**Note 2**: Perl6 2018.11 introduced handling of Definition blocks,
 `Defn`. Please upgrade if you are using that feature in the
 documentation.
 

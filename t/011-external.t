@@ -4,8 +4,6 @@ plan 8;
 
 use MONKEY-SEE-NO-EVAL;
 
-# XXX Need a module to walk HTML trees
-
 for <test class> -> $base {
     test-files( $base ~ ".pod6" );
 }
