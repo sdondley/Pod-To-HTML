@@ -1,4 +1,7 @@
 unit class Pod::To::HTML;
+
+use MONKEY-SEE-NO-EVAL;
+
 use URI::Escape;
 use Template::Mustache;
 
@@ -24,12 +27,10 @@ multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :
 }
 
 multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-    use MONKEY-SEE-NO-EVAL;
     pod2html(EVAL($file.slurp ~ "\n\$=pod"), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
 multi method render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-    use MONKEY-SEE-NO-EVAL;
     pod2html(EVAL($pod-string ~ "\n\$=pod"), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
