@@ -1,6 +1,6 @@
 use Test; # -*- mode: perl6 -*-
 use Pod::To::HTML;
-plan 8;
+plan 9;
 
 use MONKEY-SEE-NO-EVAL;
 
@@ -22,3 +22,10 @@ sub test-files( $possible-file-path ) {
     $r = pod2html($pod, :header(''), :footer(''), :head(''), :default-title(''), :lang('en'));
     unlike( $r, /Pod\:\:To/, "Is not prepending class name" );
 }
+
+my $class = q:to/EOC/;
+#| Hello!
+class XYZ {}
+EOC
+my $rendered= Pod::To::HTML.render($class);
+unlike( $rendered, /Pod\:\:To/, "Is not prepending class name" );

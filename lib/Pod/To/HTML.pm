@@ -1,7 +1,5 @@
 unit class Pod::To::HTML;
 
-use MONKEY-SEE-NO-EVAL;
-
 use URI::Escape;
 use Template::Mustache;
 use Pod::Load;
@@ -33,7 +31,7 @@ multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :h
 }
 
 multi method render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-    pod2html(EVAL($pod-string ~ "\n\$=pod"), :$header, :$footer, :$head, :$default-title, :$lang);
+    pod2html($pod-string, :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
