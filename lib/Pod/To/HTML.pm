@@ -4,6 +4,7 @@ use MONKEY-SEE-NO-EVAL;
 
 use URI::Escape;
 use Template::Mustache;
+use Pod::Load;
 
 #try require Term::ANSIColor <&colored>;
 #if &colored.defined {
@@ -27,7 +28,8 @@ multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :
 }
 
 multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-    pod2html(EVAL($file.slurp ~ "\n\$=pod"), :$header, :$footer, :$head, :$default-title, :$lang);
+  
+    pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
 multi method render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {

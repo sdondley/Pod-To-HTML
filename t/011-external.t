@@ -1,6 +1,6 @@
 use Test; # -*- mode: perl6 -*-
 use Pod::To::HTML;
-plan 6;
+plan 8;
 
 use MONKEY-SEE-NO-EVAL;
 
@@ -16,6 +16,7 @@ sub test-files( $possible-file-path ) {
 
     my $a-pod = $example-path.IO.slurp;
     my $rendered= Pod::To::HTML.render($example-path.IO);
+    unlike( $rendered, /Pod\:\:To/, "Is not prepending class name" );
     my $pod = (EVAL ($a-pod ~ "\n\$=pod")); # use proved pod2onebigpage method
     my $r = node2html $pod;
     ok( $r, "Converting external" );

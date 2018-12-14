@@ -1,13 +1,14 @@
 {
     "perl"        : "6.*",
     "name"        : "Pod::To::HTML",
-    "version"     : "0.4.1",
+    "version"     : "0.5.0",
     "author" : "Perl 6",
     "description" : "Convert Perl 6 Pod to HTML",
     "license"     : "Artistic-2.0",
     "depends"     : [
 	"URI",
-	"Template::Mustache"
+	"Template::Mustache",
+        "Pod::Load"
     ],
     "test-depends" : ["Test::Output"],
     "provides"    : {
