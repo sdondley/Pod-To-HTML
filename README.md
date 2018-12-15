@@ -6,7 +6,8 @@ Render Perl 6 Pod as HTML
 
 ## Install
 
-This module is in the [Perl 6 ecosystem](https://modules.perl6.org), so you install it in the usual way:
+This module is in the [Perl 6 ecosystem](https://modules.perl6.org),
+so you can install it in the usual way:
 
     zef install Pod::To::HTML
 
@@ -68,19 +69,23 @@ say pod2html $=pod[0], :templates("lib/templates");
 ## DESCRIPTION
 
 `Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly
-formatted HTML. Generally this is done via the command line,
-using`perl6 --doc=HTML`, which extracts the pod from the document and
-feeds it to `Pod::To::HTML`. The other route is with the `render`
-method (called by `--doc=HTML`), which creates a complete HTML
-document from the Pod tree it is called with.
+formatted HTML using default or provided templates. Generally this is
+done via the command line, using`perl6 --doc=HTML`, which extracts the
+Pod from the document and feeds it to `Pod::To::HTML`. The other
+route, used from your own program, is via the `render` method (called
+by `--doc=HTML`), which creates a complete HTML document from the Pod
+tree it is called with.
 
 Optionally, a custom header/fooder/head-fields can be
-provided. These can be used to link to custom CSS stylesheets and
+provided, or even a full template that uses Mustache as a
+language. These can be used to link to custom CSS stylesheets and 
 JavaScript libraries.
 
 ## Examples
 
-Check the [`examples`](resources/examples/README.md) directory (which should have been installed with your distribution, or is right here if you download from source) for a few illustrative examples.
+Check the [`examples`](resources/examples/README.md) directory (which
+should have been installed with your distribution, or is right here if
+you download from source) for a few illustrative examples. 
 
 ## DEBUGGING
 
