@@ -26,12 +26,13 @@ multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :
 }
 
 multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-  
-    pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
+  Debug { note colored("Rendering with IO::Path", "bold") ~ load($file).perl }
+
+  pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
 multi method render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-    pod2html($pod-string, :$header, :$footer, :$head, :$default-title, :$lang);
+    pod2html(load($pod-string), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
@@ -184,6 +185,7 @@ sub pod2html(
     #| Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
+    Debug { note colored("About to call node2html ", "bold") ~ $pod.perl };
     @body.push: node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
     my $title_html = $title // $default-title // '';
 
@@ -478,7 +480,8 @@ multi sub node2html(Pod::Item $node) {
 }
 
 multi sub node2html(Positional $node) {
-    return $node.map({ node2html($_) }).join
+  Debug { note colored("Positional node2html called for ", "bold") ~ $node.gist };
+  return $node.map({ node2html($_) }).join
 }
 
 multi sub node2html(Str $node) {
