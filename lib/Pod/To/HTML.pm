@@ -26,7 +26,7 @@ multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :
 }
 
 multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
-  Debug { note colored("Rendering with IO::Path", "bold") ~ load($file).perl }
+  Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
 
   pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
 }
