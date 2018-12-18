@@ -1,6 +1,10 @@
+2018-12-18  Juan J. merelo  <jmerelo@penny>
+
+	* META6.json: Bumps up version to account for minimum Pod::Load version requirements. 
+
 2018-12-14  Juan J. merelo  <jmerelo@penny>
 
-	* 011-external.t: Adds teste mainly for integration with GitHub, and avoiding prepending package names to defined classes.
+	* 011-external.t: Adds test mainly for integration with GitHub, and avoiding prepending package names to defined classes.
 	
 2018-12-11  Juan J. merelo  <jmerelo@penny>
 
