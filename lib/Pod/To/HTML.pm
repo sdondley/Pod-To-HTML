@@ -1,4 +1,4 @@
-unit class Pod::To::HTML;
+unit module Pod::To::HTML;
 
 use URI::Escape;
 use Template::Mustache;
@@ -13,25 +13,25 @@ sub colored($text, $how) {
     $text
 }
 
-multi method render($pod) {
+multi sub render($pod) is export {
     pod2html($pod)
 }
 
-multi method render(Array $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
+multi sub render(Array $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
     pod2html($pod, :$header, :$footer, :$head, :$default-title, :$lang)
 }
 
-multi method render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
+multi sub render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
     pod2html($pod, :$header, :$footer, :$head, :$default-title, :$lang)
 }
 
-multi method render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
+multi sub render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
   Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
 
   pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 
-multi method render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en') {
+multi sub render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
     pod2html(load($pod-string), :$header, :$footer, :$head, :$default-title, :$lang);
 }
 

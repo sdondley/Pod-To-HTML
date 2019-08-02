@@ -13,7 +13,7 @@ sub test-files( $possible-file-path ) {
     my $example-path = $possible-file-path.IO.e??$possible-file-path!!"t/$possible-file-path";
 
     my $a-pod = $example-path.IO.slurp;
-    my $rendered= Pod::To::HTML.render($example-path.IO);
+    my $rendered= render($example-path.IO);
     unlike( $rendered, /Pod\:\:To/, "Is not prepending class name" );
     my $pod = (EVAL ($a-pod ~ "\n\$=pod")); # use proved pod2onebigpage method
     my $r = node2html $pod;
@@ -27,5 +27,5 @@ my $class = q:to/EOC/;
 #| Hello!
 class XYZ {}
 EOC
-my $rendered= Pod::To::HTML.render($class);
+my $rendered= render($class);
 unlike( $rendered, /Pod\:\:To/, "Is not prepending class name" );

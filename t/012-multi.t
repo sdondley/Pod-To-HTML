@@ -5,6 +5,6 @@ plan 1;
 my $example-path = "multi.pod6".IO.e??"multi.pod6"!!"t/multi.pod6";
 
 my $a-pod = $example-path.IO.slurp;
-my $rendered= Pod::To::HTML.render($example-path.IO);
+my $rendered= render($example-path.IO);
 like( $rendered, /magicians/, "Is rendering the whole file" );
 
