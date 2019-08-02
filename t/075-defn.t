@@ -24,11 +24,13 @@ Having the quality of general expediency.
 
 =end pod
 
-say $=pod[0].perl;
 
 my $html = pod2html($=pod[0]);
 
+<<<<<<< HEAD
 #say $html;
+=======
+>>>>>>> 0e4c844a9f3f3b8722f40cefa963d5c8c89a9fc6
 ok $html ~~ ms[[
 '<dl>'
 '<dt>MAD</dt>'
