@@ -569,8 +569,8 @@ multi sub node2inline(Pod::FormattingCode $node --> Str ) {
 
             my $index-text = recurse-until-str($node).join;
             my @indices = $node.meta;
-            my $index-name-attr = qq[index-entry{@indices ?? '-' !! ''}{@indices.join('-')}{$index-text ?? '-' !! ''}$index-text].subst('_', '__', :g).subst(' ', '_', :g).subst('%', '%25', :g).subst('#', '%23', :g);
-
+            my $index-name-attr = qq[index-entry{@indices ?? '-' !! ''}{@indices.join('-')}{$index-text ?? '-' !! ''}$index-text].subst('_', '__', :g).subst(' ', '_', :g);
+            $index-name-attr = url($index-name-attr).subst(/^\//, '');
             my $text = node2inline($node.contents);
             %crossrefs{$_} = $text for @indices;
 
