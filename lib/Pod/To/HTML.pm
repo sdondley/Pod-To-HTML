@@ -8,7 +8,7 @@ use Pod::Load;
 ## when --doc=name is used. Then the render method is called with a pod tree.
 ## The following adds a Pod::To::HTML class and the method to call the subs in the module.
 class Pod::To::HTML {
-    method render( $pod ) { &render( $po ) }
+    method render( $pod ) { &render( $pod ) }
 }
 
 #try require Term::ANSIColor <&colored>;
