@@ -4,6 +4,13 @@ use URI::Escape;
 use Template::Mustache;
 use Pod::Load;
 
+# the Rakudo compiler expects there to be a render method with a Pod::To::<name> invocant
+## when --doc=name is used. Then the render method is called with a pod tree.
+## The following adds a Pod::To::HTML class and the method to call the subs in the module.
+class Pod::To::HTML {
+    method render( $pod ) { &render( $po ) }
+}
+
 #try require Term::ANSIColor <&colored>;
 #if &colored.defined {
     #&colored = -> $t, $c { $t };
