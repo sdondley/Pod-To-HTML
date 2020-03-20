@@ -1,0 +1,148 @@
+=begin pod
+=head1 Pod::To::HTML
+
+[![Build Status](https://travis-ci.org/perl6/Pod-To-HTML.svg?branch=master)](https://travis-ci.org/perl6/Pod-To-HTML)
+
+Raku module to render Pod as HTML.
+
+=head2 Synopsis
+
+From the command line:
+
+=for code
+raku --doc=HTML lib/FancyModule.rakumod > FancyModule.html
+
+From within Raku:
+
+=begin code
+use Pod::To::HTML;
+
+# Pod file
+say render(
+    'your/file.pod'.IO,
+    title => 'My Own Title',
+    subtitle => 'On the Art of Making Titles',
+    lang => 'en',
+);
+=end code
+
+=head2 Installation
+
+From the L«Raku ecosystem|https://modules.raku.org»:
+
+=code $ zef install Pod::To::HTML
+
+From source:
+
+=for code
+$ git clone https://github.com/perl6/Pod-To-HTML.git
+$ cd Pod-To-HTML/
+$ zef install .
+
+B<Note>: Perl 6 2018.06 introduces changes on how non-breaking
+  whitespace was handled; this is now included in the tests. If
+  the installation fails, please upgrade to Perl 6 >= 2018.06 or
+  simply disregard the test and install with C<--force> if that
+  particular feature is of no use to you.
+
+B<Note 2>: Perl6 2018.11 introduced handling of Definition blocks,
+C<Defn>. Please upgrade if you are using that feature in the
+documentation.
+
+=head2 Description
+
+C«Pod::To::HTML» takes a Pod tree and outputs correspondingly
+formatted HTML using a default or provided Mustache template.
+There are two ways of accomplishing this:
+
+=item from the command line, using C<raku --doc=HTML>, which extracts the Pod
+from the document and feeds it to C<Pod::To::HTML>.
+
+=item from within a Raku program via the exported C<render> subroutine,
+which creates a complete HTML document from the Pod. This allows more 
+customization (C<title>, C<subtitle>, and C<lang> can override Pod's
+corresponding semantics, different Mustache template (possibly with partials),
+additional template variables for the template, etc.) than simply
+rendering the Pod via C<raku --doc=HTML> which just use the default
+template.
+
+=head2 Exported subroutines
+
+B<C<render>>: Render a Pod document from several sources. C<title>, C<subtitle>,
+and C<lang> are supplied to the Mustache template and override the Pod document's
+corresponding semantic blocks. A C<template> path can be passed; the Mustache
+template C<main.mustache> must be under that path. Partials to the template
+must be under the same path in a directory named C<partials>.
+
+=item C<render(Array $pod, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)>
+=item C<render(Pod::Block $pod, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)>
+=item C<render(IO::Path $file, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)>
+=item C<render(Str $pod-string, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)>
+
+=head2 Template information
+
+C<Pod::To::HTML> makes the following information available to the Mustache
+template:
+
+=item C<title>: This is picked up from the Pod's semantic block C<=TITLE>
+(if any), although it can be overridden by supplying it via C<render>.
+It defaults to the empty string.
+=item C<subtitle>: This is picked up from the Pod's semantic block C<=SUBTITLE>
+(if any), although it can be overridden by supplying it via C<render>.
+It defaults to the empty string.
+=item C<lang>: This is picked up from the Pod's semantic block C<=LANG>
+(if any), although it can be overridden by supplying it via C<render>.
+It defaults to the C<en>.
+=item C<toc>: The Pod document's table of contents.
+=item C<footnotes>: The Pod document's L<footnotes|https://docs.raku.org/language/pod#Notes>.
+
+
+Additional information can be made available to the Mustache template
+by supplying to C<render> as named arguments. For example,
+C«css-url => https://design.raku.org/perl.css» will be available to the
+template as C<css-url>.
+
+=head3 Semantic Blocks
+
+Semantic blocks are treated as metadata and supplied as such to a Mustache
+template. For example, from the Pod document:
+
+=begin code
+=begin pod
+=TITLE Classes and objects
+=SUBTITLE A tutorial about creating and using classes in Raku
+=LANG English
+=DATE January 01, 2020
+=end pod
+=end code
+
+the template variables C<title>, C<subtitle>, C<lang>, and C<date> are made
+available to a Mustache template. Both C<title> and C<subtitle> can be
+overridden via the C<render> subroutine.
+
+B<Note>: Pod's semantic blocks can be overridden via C<render> by using a
+variable of the same name.
+
+=head2 Examples
+
+Check the L«examples|resources/examples/README.md» directory (which
+should have been installed with your distribution, or is right here if
+you download from source) for a few illustrative examples. 
+
+=head2 Debugging
+
+You can set the C«P6DOC_DEBUG» environmental variable to make the
+module produce some debugging information.
+
+=for code
+P6DOC_DEBUG=1 raku --doc=HTML lib/FancyModule.rakumod > FancyModule.html
+
+=head2 License
+
+You can use and distribute this module under the terms of the
+The Artistic License 2.0. See the LICENSE file included in this distribution for
+complete details.
+
+The C«META6.json» file of this distribution may be distributed and modified
+without restrictions or attribution.
+=end pod

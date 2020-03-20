@@ -1,101 +1,116 @@
-# Pod::To::HTML
+Pod::To::HTML
+=============
 
 [![Build Status](https://travis-ci.org/perl6/Pod-To-HTML.svg?branch=master)](https://travis-ci.org/perl6/Pod-To-HTML)
 
-Render Perl 6 Pod as HTML
+Raku module to render Pod as HTML.
 
-## Install
-
-This module is in the [Perl 6 ecosystem](https://modules.perl6.org),
-so you can install it in the usual way:
-
-    zef install Pod::To::HTML
-
-**Note**: Perl 6 2018.06 introduces changes on how non-breaking
-  whitespace was handled; this is now included in the tests. If
-  the installation fails, please upgrade to Perl 6 >= 2018.06 or
-  simply disregard the test and install with `--force` if that
-  particular feature is of no use to you.
-
-**Note 2**: Perl6 2018.11 introduced handling of Definition blocks,
-`Defn`. Please upgrade if you are using that feature in the
-documentation.
-
-## SYNOPSIS
+Synopsis
+--------
 
 From the command line:
 
-    perl6 --doc=HTML lib/FancyModule.pm > FancyModule.html
+    raku --doc=HTML lib/FancyModule.rakumod > FancyModule.html
 
-From within Perl 6:
+From within Raku:
 
-```perl6
-# Pod Block
-=pod My I<super B<awesome>> embedded C<pod> document!
+    use Pod::To::HTML;
 
-say Pod::To::HTML.render($=pod[0]);
+    # Pod file
+    say render(
+        'your/file.pod'.IO,
+        title => 'My Own Title',
+        subtitle => 'On the Art of Making Titles',
+        lang => 'en',
+    );
 
-# Pod file
-say Pod::To::HTML.render('your/file.pod'.IO, header =>
-                         "your-custom-header-inside-body", footer =>
-                         "your-custom-footer-inside-body", head-fields
-                         => "tags-inside-head", lang => "document
-                         language (defaults to 'en')", default-title =
-                         'No =title was found so we use this', css-url
-                         => 'https://example.com/css.css'); # specify
-                         css-url as empty string to disable CSS
-                         inclusion
+Installation
+------------
 
-# Pod string
+From the [Raku ecosystem](https://modules.raku.org):
 
-my $pod = q:to/END/;
-=pod
-My I<super B<awesome>> embedded C<pod>
-document!
-END
-say Pod::To::HTML.render($pod,
-    header =>"your-custom-header-inside-body",
-    footer => "your-custom-footer-inside-body",
-	head-fields => "tags-inside-head",
-    lang => "document language (defaults to 'en')",
-	default-title => 'No =title was found so we use this');
+    $ zef install Pod::To::HTML
 
-# If you want to use a specific template 
-say pod2html $=pod[0], :templates("lib/templates");
-# main.mustache should be in that directory
+From source:
 
+    $ git clone https://github.com/perl6/Pod-To-HTML.git
+    $ cd Pod-To-HTML/
+    $ zef install .
 
-```
-## DESCRIPTION
+**Note**: Perl 6 2018.06 introduces changes on how non-breaking whitespace was handled; this is now included in the tests. If the installation fails, please upgrade to Perl 6 >= 2018.06 or simply disregard the test and install with `--force` if that particular feature is of no use to you.
 
-`Pod::To::HTML` takes a Pod 6 tree and outputs correspondingly
-formatted HTML using default or provided templates. Generally this is
-done via the command line, using`perl6 --doc=HTML`, which extracts the
-Pod from the document and feeds it to `Pod::To::HTML`. The other
-route, used from your own program, is via the `render` method (called
-by `--doc=HTML`), which creates a complete HTML document from the Pod
-tree it is called with.
+**Note 2**: Perl6 2018.11 introduced handling of Definition blocks, `Defn`. Please upgrade if you are using that feature in the documentation.
 
-Optionally, a custom header/fooder/head-fields can be
-provided, or even a full template that uses Mustache as a
-language. These can be used to link to custom CSS stylesheets and 
-JavaScript libraries.
+Description
+-----------
 
-## Examples
+`Pod::To::HTML` takes a Pod tree and outputs correspondingly formatted HTML using a default or provided Mustache template. There are two ways of accomplishing this:
 
-Check the [`examples`](resources/examples/README.md) directory (which
-should have been installed with your distribution, or is right here if
-you download from source) for a few illustrative examples. 
+  * from the command line, using `raku --doc=HTML`, which extracts the Pod from the document and feeds it to `Pod::To::HTML`.
 
-## DEBUGGING
+  * from within a Raku program via the exported `render` subroutine, which creates a complete HTML document from the Pod. This allows more customization (`title`, `subtitle`, and `lang` can override Pod's corresponding semantics, different Mustache template (possibly with partials), additional template variables for the template, etc.) than simply rendering the Pod via `raku --doc=HTML` which just use the default template.
 
-You can set the `P6DOC_DEBUG` environmental variable to make the
-module produce some debugging information. 
+Exported subroutines
+--------------------
 
+**`render`**: Render a Pod document from several sources. `title`, `subtitle`, and `lang` are supplied to the Mustache template and override the Pod document's corresponding semantic blocks. A `template` path can be passed; the Mustache template `main.mustache` must be under that path. Partials to the template must be under the same path in a directory named `partials`.
 
-## LICENSE
+  * `render(Array $pod, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)`
+
+  * `render(Pod::Block $pod, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)`
+
+  * `render(IO::Path $file, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)`
+
+  * `render(Str $pod-string, Str :$title, Str :$subtitle, Str :$lang, Str :$template = Str, *%template-vars)`
+
+Template information
+--------------------
+
+`Pod::To::HTML` makes the following information available to the Mustache template:
+
+  * `title`: This is picked up from the Pod's semantic block `=TITLE` (if any), although it can be overridden by supplying it via `render`. It defaults to the empty string.
+
+  * `subtitle`: This is picked up from the Pod's semantic block `=SUBTITLE` (if any), although it can be overridden by supplying it via `render`. It defaults to the empty string.
+
+  * `lang`: This is picked up from the Pod's semantic block `=LANG` (if any), although it can be overridden by supplying it via `render`. It defaults to the `en`.
+
+  * `toc`: The Pod document's table of contents.
+
+  * `footnotes`: The Pod document's [footnotes](https://docs.raku.org/language/pod#Notes).
+
+Additional information can be made available to the Mustache template by supplying to `render` as named arguments. For example, `css-url => https://design.raku.org/perl.css` will be available to the template as `css-url`.
+
+### Semantic Blocks
+
+Semantic blocks are treated as metadata and supplied as such to a Mustache template. For example, from the Pod document:
+
+    =begin pod
+    =TITLE Classes and objects
+    =SUBTITLE A tutorial about creating and using classes in Raku
+    =LANG English
+    =DATE January 01, 2020
+    =end pod
+
+the template variables `title`, `subtitle`, `lang`, and `date` are made available to a Mustache template. Both `title` and `subtitle` can be overridden via the `render` subroutine.
+
+**Note**: Pod's semantic blocks can be overridden via `render` by using a variable of the same name.
+
+Examples
+--------
+
+Check the [examples](resources/examples/README.md) directory (which should have been installed with your distribution, or is right here if you download from source) for a few illustrative examples. 
+
+Debugging
+---------
+
+You can set the `P6DOC_DEBUG` environmental variable to make the module produce some debugging information.
+
+    P6DOC_DEBUG=1 raku --doc=HTML lib/FancyModule.rakumod > FancyModule.html
+
+License
+-------
 
 You can use and distribute this module under the terms of the The Artistic License 2.0. See the LICENSE file included in this distribution for complete details.
 
-The META6.json file of this distribution may be distributed and modified without restrictions or attribution.
+The `META6.json` file of this distribution may be distributed and modified without restrictions or attribution.
 

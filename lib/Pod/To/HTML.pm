@@ -8,38 +8,52 @@ use Pod::Load;
 ## when --doc=name is used. Then the render method is called with a pod tree.
 ## The following adds a Pod::To::HTML class and the method to call the subs in the module.
 class Pod::To::HTML {
-    method render( $pod ) { &render( $pod ) }
+    method render($pod) { &render($pod) }
 }
 
-#try require Term::ANSIColor <&colored>;
-#if &colored.defined {
-    #&colored = -> $t, $c { $t };
-#}
-
-sub colored($text, $how) {
-    $text
+multi sub render(
+    Array $pod,
+    Str  :$title,
+    Str  :$subtitle,
+    Str  :$lang,
+    Str  :$template = Str,
+    *%template-vars,
+) is export {
+    pod2html($pod, :$title, :$subtitle, :$lang, :$template, |%template-vars)
 }
 
-multi sub render($pod) is export {
-    pod2html($pod)
+multi sub render(
+    Pod::Block $pod,
+    Str  :$title,
+    Str  :$subtitle,
+    Str  :$lang,
+    Str  :$template = Str,
+    *%template-vars,
+) is export {
+    pod2html($pod, :$title, :$subtitle, :$lang, :$template, |%template-vars)
 }
 
-multi sub render(Array $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
-    pod2html($pod, :$header, :$footer, :$head, :$default-title, :$lang)
+multi sub render(
+    IO::Path $file,
+    Str  :$title,
+    Str  :$subtitle,
+    Str  :$lang,
+    Str  :$template = Str,
+    *%template-vars,
+) is export {
+    Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
+    pod2html(load($file), :$title, :$subtitle, :$lang, :$template, |%template-vars)
 }
 
-multi sub render(Pod::Block $pod, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
-    pod2html($pod, :$header, :$footer, :$head, :$default-title, :$lang)
-}
-
-multi sub render(IO::Path $file, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
-  Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
-
-  pod2html(load($file), :$header, :$footer, :$head, :$default-title, :$lang);
-}
-
-multi sub render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :head-fields($head) = '', :$default-title = '', :$lang = 'en')  is export {
-    pod2html(load($pod-string), :$header, :$footer, :$head, :$default-title, :$lang);
+multi sub render(
+    Str $pod-string,
+    Str  :$title,
+    Str  :$subtitle,
+    Str  :$lang,
+    Str  :$template = Str,
+    *%template-vars,
+) is export {
+    pod2html(load($pod-string), :$title, :$subtitle, :$lang, :$template, |%template-vars)
 }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
@@ -47,12 +61,10 @@ multi sub render(Str $pod-string, Str :$header = '', Str :$footer = '', Str :hea
 # the bottom to something much more readable.
 
 my &url = {$_};
-my $title;
-my $subtitle;
-my @meta;
 my @indexes;
 my @body;
 my @footnotes;
+my %metadata;
 my %crossrefs;
 
 # see <https://docs.perl6.org/language/traps#Constants_are_Compile_Time>
@@ -91,6 +103,15 @@ multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
     $post = post($root, :@content) if defined &post;
 
     return assemble(:$pre, :$post, :@content, :node($root));
+}
+
+#try require Term::ANSIColor <&colored>;
+#if &colored.defined {
+# &colored = -> $t, $c { $t };
+#}
+
+sub colored($text, $how) {
+    $text
 }
 
 class Pod::List is Pod::Block { };
@@ -165,61 +186,95 @@ sub assemble-list-items(:@content, :$node, *% ) {
     return $foundone ?? $node.clone(contents => @newcont) !! $node;
 }
 
+sub retrieve-templates( $template-path --> List ) {
+    sub get-partials( $template-path --> Hash ) {
+        my $partials-dir = 'partials';
+        my %partials;
+        for dir($template-path.IO.add($partials-dir)) -> $partial {
+            %partials{$partial.basename.subst(/\.mustache/, '')} = $partial.IO.slurp;
+        }
+        return %partials;
+    }
 
-#| Converts a Pod tree to a HTML document using templates
+    my $template-file = %?RESOURCES<templates/main.mustache>;
+    my %partials;
+    with $template-path {
+         if  "$template-path/main.mustache".IO ~~ :f {
+            $template-file = $template-path.IO.add('main.mustache').IO;
+
+            if $template-path.IO.add('partials') ~~ :d {
+                %partials = get-partials($template-path);
+            }
+         }
+         else {
+            note "$template-path does not contain required templates. Using default.";
+        }
+    }
+
+    return $template-file, %partials;
+}
+
+# Converts a Pod tree to a HTML document using templates
 sub pod2html(
     $pod,
     :&url = -> $url { $url },
-    :$head = '',
-    :$header = '',
-    :$footer = '',
-    :$default-title,
-    :$css-url = '//design.perl6.org/perl.css',
-    :$templates = Str,
-    :$lang = 'en'
-    --> Str ) is export {
+    :$title,
+    :$subtitle,
+    :$lang,
+    :templates(:$template) = Str,
+    *%template-vars,
+    --> Str
+) is export {
 
-    my $template-file = %?RESOURCES<templates/main.mustache>;
-    with $templates {
-         if  "$templates/main.mustache".IO ~~ :f {
-             $template-file = "$templates/main.mustache".IO
-         }
-         else {
-            note "$templates does not contain required templates. Using default.";
-        }
-    }
-    ($title, $subtitle, @meta, @indexes, @body, @footnotes) = ();
-    #| Keep count of how many footnotes we've output.
+    (@indexes, @body, @footnotes) = ();
+
+    # Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
     Debug { note colored("About to call node2html ", "bold") ~ $pod.perl };
     @body.push: node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
-    my $title_html = $title // $default-title // '';
 
-    my Template::Mustache $main-tm .= new;
-    return $main-tm.render( $template-file.IO.slurp, :literal, (
-        :$lang,
-        :title($title_html),
-        :$subtitle,
-        :css($css-url),
-        :meta( do-metadata ),
-        :$head,
-        :toc( do-toc($pod) ),
-        :$header,
+    # sensible css default
+    my $default-style = %?RESOURCES<css/github.css>.IO.slurp;
+
+    # title and subtitle picked from Pod document can be overriden
+    # with provided ones via the subroutines.
+    my $title-html    = $title // %metadata<title> // '';
+    my $subtitle-html = $subtitle // %metadata<subtitle> // '';
+    my $lang-html     = $lang // %metadata<lang> // 'en';
+
+    my %context = %(
         :@body,
-        :footnotes( do-footnotes ),
-        :$footer).hash
-    )
+        # documentable template vars
+        :title($title-html),
+        :subtitle($subtitle-html),
+        :toc(do-toc($pod)),
+        :lang($lang-html),
+        :footnotes(do-footnotes),
+        # probably documentable
+        :$default-style,
+        # user should be aware that semantic blocks are made available to the Mustache template.
+        |%metadata,
+        # user can supply additional template variables for the Mustache template.
+        |%template-vars,
+    );
+
+    # get 'main.mustache' file (and possible its partials) under template path.
+    my ($template-file, %partials) = retrieve-templates($template);
+    my $content = $template-file.IO.slurp;
+
+    return Template::Mustache.render($content, %context, :from[%partials], :literal);
 }
 
-#| Returns accumulated metadata as a string of C«<meta>» tags
-sub do-metadata(  --> Str ) {
-    return +@meta ?? '' !! @meta.map(-> $p {
-        qq[<meta name="{escape_html($p.key)}" value="{node2text($p.value)}" />]
-    }).join("\n");
-}
+# Returns accumulated metadata. In this sense, metadata is any
+# semantic block found in the Pod document.
+#sub do-metadata( --> Hash ) {
+#    return +%metadata
+#    ?? %metadata.map({ $^p.key => node2text($^p.value) }).hash
+#    !! %();
+#}
 
-#| Turns accumulated headings into a nested-C«<ol>» table of contents
+# Turns accumulated headings into a nested-C«<ol>» table of contents
 sub do-toc($pod --> Str ) {
     my @levels is default(0) = 0;
 
@@ -272,17 +327,17 @@ sub do-toc($pod --> Str ) {
     !! ''
 }
 
-#| Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
-#| before each C«</section>» tag (once we have those per-header) and have notes that are visually
-#| and semantically attached to the section.
+# Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
+# before each C«</section>» tag (once we have those per-header) and have notes that are visually
+# and semantically attached to the section.
 sub do-footnotes(  --> Str ) {
     return '' unless @footnotes;
 
     my Int $current-note = $*done-notes + 1;
     my $notes = @footnotes.kv.map(-> $k, $v {
-                    my $num = $k + $current-note;
-                    qq{<li><a href="#fn-ref-$num" id="fn-$num">[↑]</a> $v </li>\n}
-                }).join;
+        my $num = $k + $current-note;
+        qq{<li><a href="#fn-ref-$num" id="fn-$num">[↑]</a> $v </li>\n}
+    }).join;
 
     $*done-notes += @footnotes;
     @footnotes = ();
@@ -292,7 +347,7 @@ sub do-footnotes(  --> Str ) {
          ~ qq[</ol></aside>\n];
 }
 
-#| block level or below
+# block level or below
 proto sub node2html(| --> Str ) is export {*}
 multi sub node2html($node) {
     Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
@@ -368,26 +423,25 @@ multi sub node2html(Pod::Block::Named $node) {
             unescape_html node2rawhtml $node.contents
         }
         default {
-            if $node.name eq 'TITLE' {
-                $title = node2text($node.contents);
+            # A named block, specifically a semantic block.
+            # Semantic blocks (https://docs.raku.org/language/pod#Semantic_blocks)
+            # are collected and supplied to templates as a poor man's YAML
+            # metadata :-).
+            if [and]
+            $node.name.match(/^<[A..Z]>+$/),
+            $node.contents.elems == 1,
+            $node.contents.head ~~ Pod::Block::Para
+            {
+                %metadata{ $node.name.lc } = node2text($node.contents);
                 return '';
             }
-            if $node.name eq 'SUBTITLE' {
-                $subtitle = node2text($node.contents);
-                return '';
+            # any other named block
+            else {
+                return '<section>'
+                    ~ "<h1>{$node.name}</h1>\n"
+                    ~ node2html($node.contents)
+                    ~ "</section>\n";
             }
-            elsif $node.name ~~ any(<VERSION DESCRIPTION AUTHOR COPYRIGHT SUMMARY>)
-              and $node.contents[0] ~~ Pod::Block::Para {
-                @meta.push: Pair.new(
-                    key => $node.name.lc,
-                    value => $node.contents
-                );
-            }
-
-            return '<section>'
-                ~ "<h1>{$node.name}</h1>\n"
-                ~ node2html($node.contents)
-                ~ "</section>\n";
         }
     }
 }
@@ -496,7 +550,7 @@ multi sub node2html(Str $node) {
 }
 
 
-#| inline level or below
+# inline level or below
 multi sub node2inline($node --> Str ) {
   Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
   return node2text($node);
@@ -604,7 +658,7 @@ multi sub node2inline(Pod::FormattingCode $node --> Str ) {
 }
 
 
-#| HTML-escaped text
+# HTML-escaped text
 multi sub node2text($node --> Str ) {
     Debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
     return escape_html(node2rawtext($node));
@@ -635,7 +689,7 @@ multi sub node2text(Str $node --> Str ) {
 }
 
 
-#| plain, unescaped text
+# plain, unescaped text
 multi sub node2rawtext($node --> Str ) {
     Debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
     return $node.Str;
