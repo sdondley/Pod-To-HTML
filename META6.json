@@ -2,7 +2,8 @@
     "perl"        : "6.*",
     "name"        : "Pod::To::HTML",
     "version"     : "0.6.2",
-    "author"      : "Raku",
+    "auth"        : "Raku",
+    "authors"     : [ "Raku" ],
     "description" : "Convert Raku Pod to HTML",
     "license"     : "Artistic-2.0",
     "depends"     : [
