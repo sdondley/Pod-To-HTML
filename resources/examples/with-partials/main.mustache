@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+
+<head>
+  {{> meta }}
+</head>
+
+<body class="pod">
+  <div id="___top"></div>
+
+  {{> banner }}
+  <main>
+    <div class="u-wrapper">
+      <div class="u-padding">
+            <article>
+                {{> heading }}
+                <div class="pod-body{{^ toc }} no-toc{{/ toc }}">
+                {{#body}}{{{ . }}}{{/body}}
+                </div>
+            </article>
+      </div>
+    </div>
+  </main>
+
+  {{> footer }}
+</body>
+</html>

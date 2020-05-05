@@ -1,13 +1,21 @@
-# Some examples for the module.
+# Example usage
 
-Test
+## General script
 
-	perl6 -I../../lib render.p6
+From this directory:
 
-which uses the local [template `main.mustache`](main.mustache) instead of the default one. Add a pod6 or pm6 file at the end if you want to check a different file. 
+    RAKUDOLIB=../../lib raku render.raku
 
-Change to the upper dir, and run
+which uses the module's local documentation and the
+default `main.mustache` template.
 
-	perl6 -Ilib resources/examples/01-parse-files.p6
+To use the local `main.mustache` template, run:
 
-for a similar version which uses the same file.
+    RAKUDOLIB=../../lib raku render.raku --template=.
+
+Run `raku render.raku -h` to output the script's help message.
+
+## Specific script
+
+In the directory `with-partials`, you can find a script using
+`Pod::To::HTML` to generate HTML with a template that uses partials.
