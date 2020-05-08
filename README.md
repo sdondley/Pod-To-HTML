@@ -1,7 +1,7 @@
 Pod::To::HTML
 =============
 
-[![Build Status](https://travis-ci.org/perl6/Pod-To-HTML.svg?branch=master)](https://travis-ci.org/perl6/Pod-To-HTML)
+[![Build Status](https://travis-ci.com/Raku/Pod-To-HTML.svg?branch=master)](https://travis-ci.com/Raku/Pod-To-HTML)
 
 Raku module to render Pod as HTML.
 
@@ -33,7 +33,7 @@ From the [Raku ecosystem](https://modules.raku.org):
 
 From source:
 
-    $ git clone https://github.com/perl6/Pod-To-HTML.git
+    $ git clone https://github.com/Raku/Pod-To-HTML.git
     $ cd Pod-To-HTML/
     $ zef install .
 
