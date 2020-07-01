@@ -268,6 +268,9 @@ sub pod2html(
     # get 'main.mustache' file (and possible its partials) under template path.
     my ($template-file, %partials) = retrieve-templates($template, $main-template-path);
     my $content = $template-file.IO.slurp;
+    
+    # reset for next execution
+    %metadata = %();
 
     return Template::Mustache.render($content, %context, :from[%partials], :literal);
 }
