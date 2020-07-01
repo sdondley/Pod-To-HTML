@@ -17,9 +17,10 @@ multi sub render(
     Str  :$subtitle,
     Str  :$lang,
     Str  :$template = Str,
+    Str  :$main-template-path = '',
     *%template-vars,
 ) is export {
-    pod2html($pod, :$title, :$subtitle, :$lang, :$template, |%template-vars)
+    pod2html($pod, :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
 
 multi sub render(
@@ -28,9 +29,10 @@ multi sub render(
     Str  :$subtitle,
     Str  :$lang,
     Str  :$template = Str,
+    Str  :$main-template-path = '',
     *%template-vars,
 ) is export {
-    pod2html($pod, :$title, :$subtitle, :$lang, :$template, |%template-vars)
+    pod2html($pod, :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
 
 multi sub render(
@@ -39,10 +41,11 @@ multi sub render(
     Str  :$subtitle,
     Str  :$lang,
     Str  :$template = Str,
+    Str  :$main-template-path = '',
     *%template-vars,
 ) is export {
     Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
-    pod2html(load($file), :$title, :$subtitle, :$lang, :$template, |%template-vars)
+    pod2html(load($file), :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
 
 multi sub render(
@@ -51,9 +54,10 @@ multi sub render(
     Str  :$subtitle,
     Str  :$lang,
     Str  :$template = Str,
+    Str  :$main-template-path = '',
     *%template-vars,
 ) is export {
-    pod2html(load($pod-string), :$title, :$subtitle, :$lang, :$template, |%template-vars)
+    pod2html(load($pod-string), :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
@@ -186,7 +190,7 @@ sub assemble-list-items(:@content, :$node, *% ) {
     return $foundone ?? $node.clone(contents => @newcont) !! $node;
 }
 
-sub retrieve-templates( $template-path --> List ) {
+sub retrieve-templates( $template-path, $main-template-path --> List) {
     sub get-partials( $template-path --> Hash ) {
         my $partials-dir = 'partials';
         my %partials;
@@ -198,6 +202,7 @@ sub retrieve-templates( $template-path --> List ) {
 
     my $template-file = %?RESOURCES<templates/main.mustache>;
     my %partials;
+
     with $template-path {
          if  "$template-path/main.mustache".IO ~~ :f {
             $template-file = $template-path.IO.add('main.mustache').IO;
@@ -211,6 +216,10 @@ sub retrieve-templates( $template-path --> List ) {
         }
     }
 
+    if $main-template-path {
+        $template-file = $main-template-path.IO;
+    }
+
     return $template-file, %partials;
 }
 
@@ -222,6 +231,7 @@ sub pod2html(
     :$subtitle,
     :$lang,
     :templates(:$template) = Str,
+    :$main-template-path,
     *%template-vars,
     --> Str
 ) is export {
@@ -260,8 +270,11 @@ sub pod2html(
     );
 
     # get 'main.mustache' file (and possible its partials) under template path.
-    my ($template-file, %partials) = retrieve-templates($template);
+    my ($template-file, %partials) = retrieve-templates($template, $main-template-path);
     my $content = $template-file.IO.slurp;
+    
+    # reset for next execution
+    %metadata = %();
 
     return Template::Mustache.render($content, %context, :from[%partials], :literal);
 }
