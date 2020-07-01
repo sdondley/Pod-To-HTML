@@ -1,4 +1,3 @@
-
 use Test; # -*- mode: perl6 -*-
 use Pod::To::HTML;
 plan 9;

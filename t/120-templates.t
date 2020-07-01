@@ -19,7 +19,7 @@ The seven suspects are:
 =end pod
 
 stderr-like { $r = pod2html $=pod[0], :templates<templates> },
-            /''/,
+            /'does not contain required templates'/,
             'Complains when required templates not found';
 
 ok $r ~~ ms[[

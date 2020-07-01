@@ -202,13 +202,17 @@ sub retrieve-templates( $template-path, $main-template-path --> List) {
 
     my $template-file = %?RESOURCES<templates/main.mustache>;
     my %partials;
+
     with $template-path {
-        if $template-path.IO.add('partials') ~~ :d {
-            %partials = get-partials($template-path);
-        }
-        
-        if "$template-path/main.mustache".IO ~~ :f {
+         if  "$template-path/main.mustache".IO ~~ :f {
             $template-file = $template-path.IO.add('main.mustache').IO;
+
+            if $template-path.IO.add('partials') ~~ :d {
+                %partials = get-partials($template-path);
+            }
+         }
+         else {
+            note "$template-path does not contain required templates. Using default.";
         }
     }
 
