@@ -1,7 +1,8 @@
-use Test;
-
 use Pod::To::HTML;
 use URI::Escape;
+use Test;
+
+plan 3;
 
 my $link-html = "";
 
