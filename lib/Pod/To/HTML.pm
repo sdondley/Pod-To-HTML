@@ -224,6 +224,7 @@ sub retrieve-templates( $template-path, $main-template-path --> List) {
 }
 
 # Converts a Pod tree to a HTML document using templates
+my $stache = Template::Mustache.new;
 sub pod2html(
     $pod,
     :&url = -> $url { $url },
@@ -237,7 +238,6 @@ sub pod2html(
 ) is export {
 
     (@indexes, @body, @footnotes) = ();
-
     # Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
@@ -276,7 +276,7 @@ sub pod2html(
     # reset for next execution
     %metadata = %();
 
-    return Template::Mustache.render($content, %context, :from[%partials], :literal);
+    return $stache.render($content, %context, :from[%partials], :literal);
 }
 
 # Returns accumulated metadata. In this sense, metadata is any
