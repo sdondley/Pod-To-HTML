@@ -1,5 +1,5 @@
 {
-    "perl"        : "6.c",
+    "perl"        : "6.d",
     "name"        : "Pod::To::HTML",
     "version"     : "0.7.1",
     "auth"        : "github:Raku",
