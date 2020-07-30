@@ -1,17 +1,17 @@
 {
     "perl"        : "6.c",
     "name"        : "Pod::To::HTML",
-    "version"     : "0.7.0",
+    "version"     : "0.7.1",
     "auth"        : "github:Raku",
     "authors"     : [ "Raku" ],
     "description" : "Convert Raku Pod to HTML",
     "license"     : "Artistic-2.0",
     "depends"     : [
-           "URI",
-           "Template::Mustache",
-           "Pod::Load:ver<0.4.0+>"
+        "URI",
+        "Template::Mustache",
+        "Pod::Load:ver<0.4.0+>",
+        "Test::Output"
     ],
-    "test-depends" : ["Test::Output"],
     "provides"     : {
         "Pod::To::HTML" : "lib/Pod/To/HTML.pm"
     },
