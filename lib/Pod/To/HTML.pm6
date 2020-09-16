@@ -31,9 +31,9 @@ my %metadata;
 my %crossrefs;
 
 # see <https://docs.perl6.org/language/traps#Constants_are_Compile_Time>
-my  $DEBUG := %*ENV<P6DOC_DEBUG>;
+my  $debug := %*ENV<P6DOC_debug>;
 
-sub Debug(Callable $c) { $c() if $DEBUG; }
+sub debug(Callable $c) { $c() if $debug; }
 
 sub escape_html(Str $str --> Str ) {
   return $str unless ( $str ~~ /<[ & < > " ' {   ]>/ ) or ( $str ~~ / ' ' / );
@@ -54,11 +54,11 @@ sub escape_id ($id) {
 }
 
 multi visit(Nil, |a) {
-    Debug { note colored("visit called for Nil", "bold") }
+    debug { note colored("visit called for Nil", "bold") }
 }
 
 multi visit($root, :&pre, :&post, :&assemble = -> *% { Nil }) {
-    Debug { note colored("visit called for ", "bold") ~ $root.perl }
+    debug { note colored("visit called for ", "bold") ~ $root.perl }
     my ($pre, $post);
     $pre = pre($root) if defined &pre;
 
@@ -200,7 +200,7 @@ sub pod2html(
     # Keep count of how many footnotes we've output.
     my Int $*done-notes = 0;
     &OUTER::url = &url;
-    Debug { note colored("About to call node2html ", "bold") ~ $pod.perl };
+    debug { note colored("About to call node2html ", "bold") ~ $pod.perl };
     @body.push: node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
 
     # sensible css default
@@ -322,7 +322,7 @@ sub do-footnotes(  --> Str ) {
 # block level or below
 proto sub node2html(| --> Str ) is export {*}
 multi sub node2html($node) {
-    Debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
+    debug { note colored("Generic node2html called for ", "bold") ~ $node.perl };
     return node2inline($node);
 }
 
@@ -337,14 +337,14 @@ multi sub node2html(Pod::Block::Declarator $node) {
             ~ "\n</article>\n";
         }
         default {
-            Debug { note "I don't know what {$node.WHEREFORE.WHAT.perl} is. Assuming class..." };
+            debug { note "I don't know what {$node.WHEREFORE.WHAT.perl} is. Assuming class..." };
         "<h1>"~ node2html([$node.WHEREFORE.perl, q{: }, $node.contents])~ "</h1>";
         }
     }
 }
 
 multi sub node2html(Pod::Block::Code $node) {
-    Debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Code node2html called for ", "bold") ~ $node.gist };
     if %*POD2HTML-CALLBACKS and %*POD2HTML-CALLBACKS<code> -> &cb {
         return cb :$node, default => sub ($node) {
             return '<pre class="pod-block-code">' ~ node2inline($node.contents) ~ "</pre>\n"
@@ -357,12 +357,12 @@ multi sub node2html(Pod::Block::Code $node) {
 }
 
 multi sub node2html(Pod::Block::Comment $node) {
-    Debug { note colored("Comment node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Comment node2html called for ", "bold") ~ $node.gist };
     return '';
 }
 
 multi sub node2html(Pod::Block::Named $node) {
-    Debug { note colored("Named Block node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Named Block node2html called for ", "bold") ~ $node.gist };
     given $node.name {
         when 'config' { return '' }
         when 'nested' {
@@ -423,12 +423,12 @@ sub node2rawhtml(Positional $node) {
 }
 
 multi sub node2html(Pod::Block::Para $node) {
-    Debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Para node2html called for ", "bold") ~ $node.gist };
     return '<p>' ~ node2inline($node.contents) ~ "</p>\n";
 }
 
 multi sub node2html(Pod::Block::Table $node) {
-    Debug { note colored("Table node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Table node2html called for ", "bold") ~ $node.gist };
     my @r = $node.config<class>??'<table class="pod-table '~$node.config<class>~'">'!!'<table class="pod-table">';
 
     if $node.caption -> $c {
@@ -462,7 +462,7 @@ multi sub node2html(Pod::Block::Table $node) {
 }
 
 multi sub node2html(Pod::Config $node) {
-    Debug { note colored("Config node2html called for ", "bold") ~ $node.perl };
+    debug { note colored("Config node2html called for ", "bold") ~ $node.perl };
     return '';
 }
 
@@ -479,7 +479,7 @@ multi sub node2html(Pod::Defn $node) {
 # TODO: would like some way to wrap these and the following content in a <section>; this might be
 # the same way we get lists working...
 multi sub node2html(Pod::Heading $node) {
-    Debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("Heading node2html called for ", "bold") ~ $node.gist };
     my $lvl = min($node.level, 6); #= HTML only has 6 levels of numbered headings
     my %escaped = (
         id => escape_id(node2rawtext($node.contents)),
@@ -508,12 +508,12 @@ multi sub node2html(Pod::List $node) {
     return '<ul>' ~ node2html($node.contents) ~ "</ul>\n";
 }
 multi sub node2html(Pod::Item $node) {
-    Debug { note colored("List Item node2html called for ", "bold") ~ $node.gist };
+    debug { note colored("List Item node2html called for ", "bold") ~ $node.gist };
     return '<li>' ~ node2html($node.contents) ~ "</li>\n";
 }
 
 multi sub node2html(Positional $node) {
-  Debug { note colored("Positional node2html called for ", "bold") ~ $node.gist };
+  debug { note colored("Positional node2html called for ", "bold") ~ $node.gist };
   return $node.map({ node2html($_) }).join
 }
 
@@ -524,7 +524,7 @@ multi sub node2html(Str $node) {
 
 # inline level or below
 multi sub node2inline($node --> Str ) {
-  Debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
+  debug { note colored("missing a node2inline multi for ", "bold") ~ $node.gist };
   return node2text($node);
 }
 
@@ -614,7 +614,7 @@ multi sub node2inline(Pod::FormattingCode $node --> Str ) {
 
         # Stuff I haven't figured out yet
         default {
-            Debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
+            debug { note colored("missing handling for a formatting code of type ", "red") ~ $node.type }
             return qq{<kbd class="pod2html-todo">$node.type()&lt;}
                     ~ node2inline($node.contents)
                     ~ q{&gt;</kbd>};
@@ -633,7 +633,7 @@ multi sub node2inline(Pod::FormattingCode $node --> Str ) {
 
 # HTML-escaped text
 multi sub node2text($node --> Str ) {
-    Debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
+    debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
     return escape_html(node2rawtext($node));
 }
 
@@ -663,12 +663,12 @@ multi sub node2text(Str $node --> Str ) {
 
 # plain, unescaped text
 multi sub node2rawtext($node --> Str ) {
-    Debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
+    debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
     return $node.Str;
 }
 
 multi sub node2rawtext(Pod::Block $node --> Str ) {
-    Debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
+    debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
     return node2rawtext($node.contents);
 }
 
