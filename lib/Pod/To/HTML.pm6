@@ -11,13 +11,13 @@ class Pod::To::HTML {
     method render($pod) { &render($pod) }
 }
 
+proto render(|) is export {*}
 multi render(Any $pod, Str :$title, Str :$subtitle, Str :$lang,
              Str :$template = Str, Str :$main-template-path = '', *%template-vars) {
+    die 'Can load only Pod::Block objects or an Array of such' unless $pod ~~ Pod::Block:D | Array:D;
     pod2html($pod, :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
-multi render(Pod::Block $file, *%nameds) is export { nextsame }
-multi render(Array $file, *%nameds) is export { nextsame }
-multi render($file where Str|IO::Path, *%nameds) is export { nextwith((load($file)), |%nameds) }
+multi render($file where Str|IO::Path, *%nameds) { nextwith((load($file)), |%nameds) }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
 # way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at

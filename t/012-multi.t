@@ -1,10 +1,17 @@
-use Test; # -*- mode: perl6 -*-
+use Test;
 use Pod::To::HTML;
-plan 1;
+use Pod::Load;
 
-my $example-path = "multi.pod6".IO.e??"multi.pod6"!!"t/multi.pod6";
+my $test-pod-path = $?FILE.IO.sibling('multi.pod6');
 
-my $a-pod = $example-path.IO.slurp;
-my $rendered= render($example-path.IO);
-like( $rendered, /magicians/, "Is rendering the whole file" );
+dies-ok { render(42) }, 'Cannot render an Int';
 
+like render($test-pod-path), /magicians/, 'Is rendering the whole file by path Str';
+
+like render(slurp $test-pod-path), /magicians/, 'Is rendering the whole file by text';
+
+like render([load($test-pod-path)]), /magicians/, 'Is rendering an Array';
+
+like render(load($test-pod-path)), /magicians/, 'Is rendering a Pod::Block';
+
+done-testing;
