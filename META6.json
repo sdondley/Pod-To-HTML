@@ -13,7 +13,7 @@
         "Test::Output"
     ],
     "provides"     : {
-        "Pod::To::HTML" : "lib/Pod/To/HTML.pm"
+        "Pod::To::HTML" : "lib/Pod/To/HTML.pm6"
     },
     "resources": [
         "templates/main.mustache",
