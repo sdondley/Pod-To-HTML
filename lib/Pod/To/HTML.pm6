@@ -11,54 +11,13 @@ class Pod::To::HTML {
     method render($pod) { &render($pod) }
 }
 
-multi sub render(
-    Array $pod,
-    Str  :$title,
-    Str  :$subtitle,
-    Str  :$lang,
-    Str  :$template = Str,
-    Str  :$main-template-path = '',
-    *%template-vars,
-) is export {
+multi render(Any $pod, Str :$title, Str :$subtitle, Str :$lang,
+             Str :$template = Str, Str :$main-template-path = '', *%template-vars) {
     pod2html($pod, :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
 }
-
-multi sub render(
-    Pod::Block $pod,
-    Str  :$title,
-    Str  :$subtitle,
-    Str  :$lang,
-    Str  :$template = Str,
-    Str  :$main-template-path = '',
-    *%template-vars,
-) is export {
-    pod2html($pod, :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
-}
-
-multi sub render(
-    IO::Path $file,
-    Str  :$title,
-    Str  :$subtitle,
-    Str  :$lang,
-    Str  :$template = Str,
-    Str  :$main-template-path = '',
-    *%template-vars,
-) is export {
-    Debug { note colored("Rendering with IO::Path ", "bold") ~ load($file).perl }
-    pod2html(load($file), :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
-}
-
-multi sub render(
-    Str $pod-string,
-    Str  :$title,
-    Str  :$subtitle,
-    Str  :$lang,
-    Str  :$template = Str,
-    Str  :$main-template-path = '',
-    *%template-vars,
-) is export {
-    pod2html(load($pod-string), :$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars)
-}
+multi render(Pod::Block $file, *%nameds) is export { nextsame }
+multi render(Array $file, *%nameds) is export { nextsame }
+multi render($file where Str|IO::Path, *%nameds) is export { nextwith((load($file)), |%nameds) }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
 # way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at
@@ -701,7 +660,6 @@ multi sub node2text(Positional $node --> Str ) {
 multi sub node2text(Str $node --> Str ) {
     return escape_html($node);
 }
-
 
 # plain, unescaped text
 multi sub node2rawtext($node --> Str ) {
