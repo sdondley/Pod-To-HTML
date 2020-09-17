@@ -644,21 +644,12 @@ multi sub node2text(Str $node --> Str) {
 
 # plain, unescaped text
 multi sub node2rawtext($node --> Str) {
-    debug { note colored("Generic node2rawtext called with ", "red") ~ $node.perl };
-    return $node.Str;
-}
-
-multi sub node2rawtext(Pod::Block $node --> Str) {
-    debug { note colored("node2rawtext called for ", "bold") ~ $node.gist };
-    return node2rawtext($node.contents);
-}
-
-multi sub node2rawtext(Positional $node --> Str) {
-    return $node.map({ node2rawtext($_) }).join;
-}
-
-multi sub node2rawtext(Str $node --> Str) {
-    return $node;
+    debug { note colored("Generic node2rawtext called with ", "red") ~ $node.raku };
+    given $node {
+        when Pod::Block { samewith($node.contents) }
+        when Positional { $node.map(&node2rawtext).join }
+        default { $node.Str }
+    }
 }
 
 # vim: expandtab shiftwidth=4 ft=perl6
