@@ -44,7 +44,7 @@ class Pod::To::HTML {
         # sensible css default
         my $default-style = %?RESOURCES<css/github.css>.IO.slurp;
 
-        # title and subtitle picked from Pod document can be overriden
+        # title and subtitle picked from Pod document can be overridden
         # with provided ones via the subroutines.
         my $title-html    = $!title // %!metadata<title> // '';
         my $subtitle-html = $!subtitle // %!metadata<subtitle> // '';
