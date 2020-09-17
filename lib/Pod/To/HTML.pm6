@@ -613,40 +613,21 @@ sub do-toc($pod --> Str) {
 }
 
 # HTML-escaped text
-multi sub node2text($node --> Str) {
+sub node2text($node --> Str) {
     debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
-    return escape_html(node2rawtext($node));
-}
-
-multi sub node2text(Pod::Block::Para $node --> Str) {
-    return node2text($node.contents);
-}
-
-multi sub node2text(Pod::Raw $node --> Str) {
-    my $t = $node.target;
-    if $t && lc($t) eq 'html' {
-        $node.contents.join
+    given $node {
+        when Pod::Block::Para { node2text($node.contents) }
+        when Pod::Raw   { $node.target.?lc eqv 'html' ?? $node.contents.join !! '' }
+        when Positional { $node.map(&node2text).join }
+        default { escape_html(node2rawtext($node)) }
     }
-    else {
-        '';
-    }
-}
-
-# FIXME: a lot of these multis are identical except the function name used...
-#        there has to be a better way to write this?
-multi sub node2text(Positional $node --> Str) {
-    return $node.map({ node2text($_) }).join;
-}
-
-multi sub node2text(Str $node --> Str) {
-    return escape_html($node);
 }
 
 # plain, unescaped text
-multi sub node2rawtext($node --> Str) {
+sub node2rawtext($node --> Str) {
     debug { note colored("Generic node2rawtext called with ", "red") ~ $node.raku };
     given $node {
-        when Pod::Block { samewith($node.contents) }
+        when Pod::Block { node2rawtext($node.contents) }
         when Positional { $node.map(&node2rawtext).join }
         default { $node.Str }
     }
