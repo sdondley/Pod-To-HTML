@@ -8,6 +8,7 @@ class Pod::List is Pod::Block {};
 class Pod::DefnList is Pod::Block {};
 BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
 class Node::To::HTML {...}
+class TOC::Calculator {...}
 
 # the Rakudo compiler expects there to be a render method with a Pod::To::<name> invocant
 ## when --doc=name is used. Then the render method is called with a pod tree.
@@ -53,7 +54,7 @@ class Pod::To::HTML {
         my %context = :@!body,
                       # documentable template vars
                       :title($title-html), :subtitle($subtitle-html),
-                      :toc(do-toc($pod)), :lang($lang-html),
+                      :toc(TOC::Calculator.new(:$pod).render), :lang($lang-html),
                       :footnotes(self!do-footnotes),
                       # probably documentable
                       :$default-style,
@@ -558,63 +559,90 @@ sub retrieve-templates($template-path, $main-template-path --> List) {
     return $template-file, %partials;
 }
 
-# Turns accumulated headings into a nested-C«<ol>» table of contents
-sub do-toc($pod --> Str) {
-    my @levels is default(0) = 0;
+class TOC::Calculator {
+    has @.levels is default(0) = 0;
+    has $.pod;
 
-    my proto sub find-headings($node, :$inside-heading) {*}
+    submethod BUILD(:$!pod!) {}
 
-    multi sub find-headings(Str $s is raw, :$inside-heading) {
-        $inside-heading ?? $s.trim.&escape_html !! ''
+    method calculate() {
+        my proto sub find-headings($node, :$inside-heading) {*}
+
+        multi sub find-headings(Str $s is raw, :$inside-heading) {
+            $inside-heading ?? { plain => $s.&escape_html } !! ()
+        }
+
+        multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading) {
+            my $html = $node.contents.map(*.&find-headings(:$inside-heading)).Array;
+            $inside-heading ?? { coded => $html } !! ()
+        }
+
+        multi sub find-headings(Pod::Heading $node is raw, :$inside-heading) {
+            @!levels.splice($node.level) if $node.level < +@!levels;
+            @!levels[$node.level - 1]++;
+            my $level-hierarchy = @!levels.join('.');
+            # e.g. §4.2.12
+            my $text = $node.contents.map(*.&find-headings(:inside-heading)).Array;
+            my $link = escape_id(node2text($node.contents));
+            { level => $node.level, :$level-hierarchy, :$text, :$link }
+        }
+
+        multi sub find-headings(Positional \list, :$inside-heading) {
+            |list.map(*.&find-headings(:$inside-heading)).Array
+        }
+
+        multi sub find-headings(Pod::Block $node is raw, :$inside-heading) {
+            |$node.contents.map(*.&find-headings(:$inside-heading)).Array
+        }
+
+        multi sub find-headings(Pod::Config $node, :$inside-heading) {
+            hash
+        }
+
+        multi sub find-headings(Pod::Raw $node is raw, :$inside-heading) {
+            |$node.contents.map(*.&find-headings(:$inside-heading)).Array
+        }
+
+        find-headings($!pod);
     }
 
-    multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading) {
-        my $html = $node.contents.map(*.&find-headings(:$inside-heading));
-        $inside-heading ?? qq[<code class="pod-code-inline">{ $html }</code>] !! ''
-    }
-
-    multi sub find-headings(Pod::Heading $node is raw, :$inside-heading) {
-        @levels.splice($node.level) if $node.level < +@levels;
-        @levels[$node.level - 1]++;
-        my $level-hierarchy = @levels.join('.');
-        # e.g. §4.2.12
-        my $text = $node.contents.map(*.&find-headings(inside-heading => True));
-        my $link = escape_id(node2text($node.contents));
-        qq[<tr class="toc-level-{ $node.level }"><td class="toc-number">{ $level-hierarchy }</td><td class="toc-text"><a href="#$link">{ $text }</a></td></tr>\n];
-    }
-
-    multi sub find-headings(Positional \list, :$inside-heading) {
-        list.map(*.&find-headings(:$inside-heading))
-    }
-
-    multi sub find-headings(Pod::Block $node is raw, :$inside-heading) {
-        $node.contents.map(*.&find-headings(:$inside-heading))
-    }
-
-    multi sub find-headings(Pod::Config $node, :$inside-heading) {
-        ''
-    }
-
-    multi sub find-headings(Pod::Raw $node is raw, :$inside-heading) {
-        $node.contents.map(*.&find-headings(:$inside-heading))
-    }
-
-    my $html = find-headings($pod);
-    $html.trim ??
+    method render() {
+        my $toc = self.calculate;
+        my $result;
+        for $toc -> $item {
+            next unless $item;
+            my $text = self.render-heading($item<text>);
+            $result ~= "<tr class=\"toc-level-{ $item<level> }\"><td class=\"toc-number\">{ $item<level-hierarchy> }</td><td class=\"toc-text\"><a href=\"#$item<link>\">{ $text }</a></td></tr>\n";
+        }
+        $result.?trim ??
         qq:to/EOH/
         <nav class="indexgroup">
         <table id="TOC">
         <caption><h2 id="TOC_Title">Table of Contents</h2></caption>
-        { $html }
+        { $result }
         </table>
         </nav>
         EOH
-    !! ''
+        !! ''
+    }
+
+    method render-heading($heading) {
+        if $heading ~~ Positional {
+            return $heading.map({ self.render-heading($_) }).join;
+        } elsif $heading ~~ Associative {
+            with $heading<plain> {
+                return $_
+            }
+            with $heading<coded> {
+                return "<code class=\"pod-code-inline\">{ self.render-heading($_) }</code>"
+            }
+        }
+    }
 }
 
 # HTML-escaped text
 sub node2text($node --> Str) {
-    debug { note colored("missing a node2text multi for ", "red") ~ $node.perl };
+    debug { note colored("Generic node2text called with ", "red") ~ $node.perl };
     given $node {
         when Pod::Block::Para { node2text($node.contents) }
         when Pod::Raw   { $node.target.?lc eqv 'html' ?? $node.contents.join !! '' }
