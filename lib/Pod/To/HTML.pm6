@@ -406,7 +406,7 @@ multi render(Any $pod, Str :$title, Str :$subtitle, Str :$lang,
     die 'Can load only Pod::Block objects or an Array of such' unless $pod ~~ Pod::Block:D | Array:D;
     Pod::To::HTML.new(:$title, :$subtitle, :$lang, :$template, :$main-template-path, |%template-vars).render($pod);
 }
-multi render($file where Str | IO::Path, *%nameds) { nextwith((load($file)), |%nameds) }
+multi render($file where Str | IO::Path, *%nameds) { render((load($file)), |%nameds) }
 
 # FIXME: this code's a horrible mess. It'd be really helpful to have a module providing a generic
 # way to walk a Pod tree and invoke callbacks on each node, that would reduce the multispaghetti at
