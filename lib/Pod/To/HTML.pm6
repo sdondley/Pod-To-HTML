@@ -1,5 +1,3 @@
-unit module Pod::To::HTML;
-
 use URI::Escape;
 use Template::Mustache;
 use Pod::Load;
@@ -14,6 +12,8 @@ class TOC::Calculator {...}
 ## when --doc=name is used. Then the render method is called with a pod tree.
 ## The following adds a Pod::To::HTML class and the method to call the subs in the module.
 class Pod::To::HTML {
+    # Renderers
+    has $.node-renderer;
     # Data from creator
     has $.title;
     has $.subtitle;
@@ -28,19 +28,20 @@ class Pod::To::HTML {
     has @.body;
     has @.footnotes;
 
-    method new(:$title, :$subtitle, :$lang, :templates($template), :$main-template-path = '', *%template-vars) {
-        self.bless(:$title, :$subtitle, :$lang, :$template, :$main-template-path, :%template-vars);
+    method new(:$title, :$subtitle, :$lang, :templates(:$template),
+               :$node-renderer = Node::To::HTML, :$main-template-path = '', *%template-vars) {
+        self.bless(:$title, :$subtitle, :$lang, :$template, :$node-renderer, :$main-template-path, :%template-vars);
     }
 
     method url($url-text) { &!url.defined ?? &!url($url-text) !! $url-text }
 
     #| Converts a Pod tree to a HTML document using templates
-    method render($pod, :&url = -> $url { $url }) {
+    method render($pod, TOC::Calculator :$toc = TOC::Calculator, :&url = -> $url { $url }) {
         # Keep count of how many footnotes we've output.
         my Int $*done-notes = 0;
         &!url = &url;
         debug { note colored("About to call node2html ", "bold") ~ $pod.perl };
-        @!body.push: Node::To::HTML.new(renderer => self).node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
+        @!body.push: $!node-renderer.new(renderer => self).node2html($pod.map: { visit $_, :assemble(&assemble-list-items) });
 
         # sensible css default
         my $default-style = %?RESOURCES<css/github.css>.IO.slurp;
@@ -54,8 +55,8 @@ class Pod::To::HTML {
         my %context = :@!body,
                       # documentable template vars
                       :title($title-html), :subtitle($subtitle-html),
-                      :toc(TOC::Calculator.new(:$pod).render), :lang($lang-html),
-                      :footnotes(self!do-footnotes),
+                      :toc($toc.new(:$pod).render), :lang($lang-html),
+                      :footnotes(self.do-footnotes),
                       # probably documentable
                       :$default-style,
                       # user should be aware that semantic blocks are made available to the Mustache template.
@@ -73,7 +74,7 @@ class Pod::To::HTML {
     # Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
     # before each C«</section>» tag (once we have those per-header) and have notes that are visually
     # and semantically attached to the section.
-    method !do-footnotes() {
+    method do-footnotes() {
         return '' unless @!footnotes;
 
         my Int $current-note = $*done-notes + 1;
@@ -369,8 +370,7 @@ class Node::To::HTML {
                     ~ qq[</a>];
         }
 
-        return sprintf('<h%d id="%s">', $lvl, %escaped<id>)
-                ~ $content ~ qq[</h{ $lvl }>\n];
+        return "<h$lvl id={"\"%escaped<id>\""}>$content\</h$lvl>\n";
     }
 
     # FIXME
@@ -428,7 +428,7 @@ sub unescape_html(Str $str --> Str) {
             [q{&}, q{<}, q{>}, q{"}, q{'}]);
 }
 
-sub escape_id ($id) {
+sub escape_id ($id) is export {
     $id.trim.subst(/\s+/, '_', :g)
             .subst('"', '&quot;', :g)
             .subst('&nbsp;', '_', :g)
@@ -461,22 +461,22 @@ sub colored($text, $how) {
 
 sub assemble-list-items(:@content, :$node, *%) {
     my @newcont;
-    my $foundone = False;
-    my $everwarn = False;
+    my $found-one = False;
+    my $ever-warn = False;
 
-    my $atlevel = 0;
-    my @pushalias;
+    my $at-level = 0;
+    my @push-alias;
 
     my sub oodwarn($got, $want) {
-        unless $everwarn {
+        unless $ever-warn {
             warn "=item$got without preceding =item$want found!";
-            $everwarn = True;
+            $ever-warn = True;
         }
     }
 
     for @content {
         when Pod::Item {
-            $foundone = True;
+            $found-one = True;
 
             # here we deal with @newcont being empty (first list), or with the
             # last element not being a list (new list)
@@ -489,29 +489,29 @@ sub assemble-list-items(:@content, :$node, *%) {
 
             # only bother doing the binding business if we're at a different
             # level than previous items
-            if $_.level != $atlevel {
+            if $_.level != $at-level {
                 # guaranteed to be bound to a Pod::List (see above 'unless')
-                @pushalias := @newcont[*-1].contents;
+                @push-alias := @newcont[*-1].contents;
 
                 for 2 .. ($_.level) -> $L {
-                    unless +@pushalias && @pushalias[*-1] ~~ Pod::List {
-                        @pushalias.push(Pod::List.new());
-                        if +@pushalias == 1 { # we had to push a sublist to a list with no =items
+                    unless +@push-alias && @push-alias[*-1] ~~ Pod::List {
+                        @push-alias.push(Pod::List.new());
+                        if +@push-alias == 1 { # we had to push a sublist to a list with no =items
                             oodwarn($OUTER::_.level, $L);
                         }
                     }
-                    @pushalias := @pushalias[*-1].contents;
+                    @push-alias := @push-alias[*-1].contents;
                 }
 
-                $atlevel = $_.level;
+                $at-level = $_.level;
             }
 
-            @pushalias.push($_);
+            @push-alias.push($_);
         }
         # This is simpler than lists because we don't need to
         # list
         when Pod::Defn {
-            $foundone = True;
+            $found-one = True;
             unless +@newcont && @newcont[*-1] ~~ Pod::DefnList {
                 @newcont.push(Pod::DefnList.new());
             }
@@ -520,11 +520,11 @@ sub assemble-list-items(:@content, :$node, *%) {
 
         default {
             @newcont.push($_);
-            $atlevel = 0;
+            $at-level = 0;
         }
     }
 
-    return $foundone ?? $node.clone(contents => @newcont) !! $node;
+    return $found-one ?? $node.clone(contents => @newcont) !! $node;
 }
 
 sub retrieve-templates($template-path, $main-template-path --> List) {
@@ -561,9 +561,7 @@ sub retrieve-templates($template-path, $main-template-path --> List) {
 
 class TOC::Calculator {
     has @.levels is default(0) = 0;
-    has $.pod;
-
-    submethod BUILD(:$!pod!) {}
+    has $.pod is required;
 
     method calculate() {
         my proto sub find-headings($node, :$inside-heading) {*}
@@ -603,16 +601,15 @@ class TOC::Calculator {
             |$node.contents.map(*.&find-headings(:$inside-heading)).Array
         }
 
-        find-headings($!pod);
+        find-headings($!pod).grep(so *);
     }
 
     method render() {
         my $toc = self.calculate;
         my $result;
-        for $toc -> $item {
-            next unless $item;
+        for $toc<> -> $item {
             my $text = self.render-heading($item<text>);
-            $result ~= "<tr class=\"toc-level-{ $item<level> }\"><td class=\"toc-number\">{ $item<level-hierarchy> }</td><td class=\"toc-text\"><a href=\"#$item<link>\">{ $text }</a></td></tr>\n";
+            $result ~= "<tr class=\"toc-level-{ $item<level> }\"><td class=\"toc-number\">{ $item<level-hierarchy> }\</td><td class=\"toc-text\"><a href=\"#$item<link>\">{ $text }\</a></td></tr>\n";
         }
         $result.?trim ??
         qq:to/EOH/
@@ -652,7 +649,7 @@ sub node2text($node --> Str) {
 }
 
 # plain, unescaped text
-sub node2rawtext($node --> Str) {
+sub node2rawtext($node --> Str) is export {
     debug { note colored("Generic node2rawtext called with ", "red") ~ $node.raku };
     given $node {
         when Pod::Block { node2rawtext($node.contents) }
