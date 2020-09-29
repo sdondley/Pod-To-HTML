@@ -9,7 +9,9 @@
     "depends"     : [
         "URI",
         "Template::Mustache",
-        "Pod::Load:ver<0.4.0+>",
+        "Pod::Load:ver<0.4.0+>"
+    ],
+    "test-depends": [
         "Test::Output"
     ],
     "provides"     : {
