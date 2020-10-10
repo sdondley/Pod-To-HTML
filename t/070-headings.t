@@ -2,7 +2,7 @@ use v6;
 use Test;
 use Pod::To::HTML;
 
-plan 3;
+plan 5;
 
 =begin pod
 
@@ -30,16 +30,22 @@ plan 3;
 
 my $html = pod2html $=pod;
 
-#put $html;
-
 ($html ~~ m:g/ ('2.2.2') /);
 
-is so ($0 && $1 && $2), True, 'hierarchical numbering';
+ok so ($0 && $1 && $2), 'hierarchical numbering';
 
 ($html ~~ m:g/ 'href="#Heading_3"' /);
 
-is so $0, True, 'link down to heading';
+ok so $0, 'link down to heading';
 
 ($html ~~ m:g/ ('name="index-entry-Heading"') /);
 
-is so ($0 || $1), True, 'no X<> anchors in ToC';
+ok so ($0 || $1), 'no X<> anchors in ToC';
+
+($html ~~ m:g/ ('<a href="#Heading_1">Heading 1</a>') /);
+
+ok so $0, 'Proper rendering of heading';
+
+($html ~~ m:g/ ('<h1 id="Heading_3"><a class="u" href="#___top" title="go to top of document">Heading <code>3</code></a></h1>') /);
+
+ok so $0, 'Proper rendering of heading from multiple nodes';

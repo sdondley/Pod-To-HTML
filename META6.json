@@ -1,7 +1,7 @@
 {
     "perl"        : "6.d",
     "name"        : "Pod::To::HTML",
-    "version"     : "0.7.1",
+    "version"     : "0.8",
     "auth"        : "github:Raku",
     "authors"     : [ "Raku" ],
     "description" : "Convert Raku Pod to HTML",
@@ -15,7 +15,7 @@
         "Test::Output"
     ],
     "provides"     : {
-        "Pod::To::HTML" : "lib/Pod/To/HTML.pm"
+        "Pod::To::HTML" : "lib/Pod/To/HTML.pm6"
     },
     "resources": [
         "templates/main.mustache",
