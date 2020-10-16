@@ -74,8 +74,8 @@ class Pod::To::HTML {
             die $! if $counter++ == 5;
             my $result = try Template::Mustache.new.render($content, %context, :from[%partials], :literal);
             with $! {
-                warn "An error occurred when rendering [$title-html], retrying, $counter times left, original message: \n" ~ $!
-                .message;
+                warn "An error occurred when rendering [$title-html], retrying, $counter times left, original message: \n"
+                        ~ $!.message;
             } else {
                 return $result;
             }
