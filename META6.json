@@ -9,7 +9,8 @@
     "depends"     : [
         "URI",
         "Template::Mustache",
-        "Pod::Load:ver<0.4.0+>"
+        "Pod::Load:ver<0.4.0+>",
+        "OO::Monitors"
     ],
     "test-depends": [
         "Test::Output"
