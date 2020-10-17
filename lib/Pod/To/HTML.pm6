@@ -9,6 +9,8 @@ BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
 class Node::To::HTML {...}
 class TOC::Calculator {...}
 
+my constant $MAX-COMPILE-TEMPLATE-ATTEMPTS = 5;
+
 # the Rakudo compiler expects there to be a render method with a Pod::To::<name> invocant
 ## when --doc=name is used. Then the render method is called with a pod tree.
 ## The following adds a Pod::To::HTML class and the method to call the subs in the module.
@@ -69,9 +71,10 @@ class Pod::To::HTML {
         my ($template-file, %partials) = retrieve-templates($!template, $!main-template-path);
         my $content = $template-file.IO.slurp;
 
-        my $counter;
+        # Try to compile a template N times to workaround issues with race-y compilation
+        my $counter = 0;
         loop {
-            die $! if $counter++ == 5;
+            $!.throw if $counter++ == $MAX-COMPILE-TEMPLATE-ATTEMPTS;
             my $result = try Template::Mustache.new.render($content, %context, :from[%partials], :literal);
             with $! {
                 warn "An error occurred when rendering [$title-html], retrying, $counter times left, original message: \n"
