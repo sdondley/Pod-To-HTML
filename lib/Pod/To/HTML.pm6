@@ -1,3 +1,4 @@
+use OO::Monitors;
 use URI::Escape;
 use Template::Mustache;
 use Pod::Load;
@@ -7,6 +8,8 @@ class Pod::DefnList is Pod::Block {};
 BEGIN { if ::('Pod::Defn') ~~ Failure { CORE::Pod::<Defn> := class {} } }
 class Node::To::HTML {...}
 class TOC::Calculator {...}
+
+my constant $MAX-COMPILE-TEMPLATE-ATTEMPTS = 5;
 
 # the Rakudo compiler expects there to be a render method with a Pod::To::<name> invocant
 ## when --doc=name is used. Then the render method is called with a pod tree.
@@ -68,7 +71,18 @@ class Pod::To::HTML {
         my ($template-file, %partials) = retrieve-templates($!template, $!main-template-path);
         my $content = $template-file.IO.slurp;
 
-        Template::Mustache.new.render($content, %context, :from[%partials], :literal);
+        # Try to compile a template N times to workaround issues with race-y compilation
+        my $counter = 0;
+        loop {
+            $!.throw if $counter++ == $MAX-COMPILE-TEMPLATE-ATTEMPTS;
+            my $result = try Template::Mustache.new.render($content, %context, :from[%partials], :literal);
+            with $! {
+                warn "An error occurred when rendering [$title-html], retrying, $counter times left, original message: \n"
+                        ~ $!.message;
+            } else {
+                return $result;
+            }
+        }
     }
 
     # Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
@@ -88,7 +102,7 @@ class Pod::To::HTML {
     }
 }
 
-class Node::To::HTML {
+monitor Node::To::HTML {
     has Pod::To::HTML $.renderer;
 
     # inline level or below
@@ -559,49 +573,49 @@ sub retrieve-templates($template-path, $main-template-path --> List) {
     return $template-file, %partials;
 }
 
-class TOC::Calculator {
+monitor TOC::Calculator {
     has @.levels is default(0) = 0;
     has $.pod is required;
 
+    proto method find-headings($node, :$inside-heading) {*}
+
+    multi method find-headings(Str $s is raw, :$inside-heading) {
+        $inside-heading ?? { plain => $s.&escape_html } !! ()
+    }
+
+    multi method find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading) {
+        my $html = $node.contents.map({ self.find-headings($_, :$inside-heading) }).Array;
+        $inside-heading ?? { coded => $html } !! ()
+    }
+
+    multi method find-headings(Pod::Heading $node is raw, :$inside-heading) {
+        @!levels.splice($node.level) if $node.level < +@!levels;
+        @!levels[$node.level - 1]++;
+        my $level-hierarchy = @!levels.join('.');
+        # e.g. §4.2.12
+        my $text = $node.contents.map({ self.find-headings($_, :inside-heading) }).Array;
+        my $link = escape_id(node2text($node.contents));
+        { level => $node.level, :$level-hierarchy, :$text, :$link }
+    }
+
+    multi method find-headings(Positional \list, :$inside-heading) {
+        |list.map({ self.find-headings($_, :$inside-heading) }).Array;
+    }
+
+    multi method find-headings(Pod::Block $node is raw, :$inside-heading) {
+        |$node.contents.map({ self.find-headings($_, :$inside-heading) }).Array
+    }
+
+    multi method find-headings(Pod::Config $node, :$inside-heading) {
+        hash;
+    }
+
+    multi method find-headings(Pod::Raw $node is raw, :$inside-heading) {
+        |$node.contents.map({ self.find-headings($_, :$inside-heading) }).Array
+    }
+
     method calculate() {
-        my proto sub find-headings($node, :$inside-heading) {*}
-
-        multi sub find-headings(Str $s is raw, :$inside-heading) {
-            $inside-heading ?? { plain => $s.&escape_html } !! ()
-        }
-
-        multi sub find-headings(Pod::FormattingCode $node is raw where *.type eq 'C', :$inside-heading) {
-            my $html = $node.contents.map(*.&find-headings(:$inside-heading)).Array;
-            $inside-heading ?? { coded => $html } !! ()
-        }
-
-        multi sub find-headings(Pod::Heading $node is raw, :$inside-heading) {
-            @!levels.splice($node.level) if $node.level < +@!levels;
-            @!levels[$node.level - 1]++;
-            my $level-hierarchy = @!levels.join('.');
-            # e.g. §4.2.12
-            my $text = $node.contents.map(*.&find-headings(:inside-heading)).Array;
-            my $link = escape_id(node2text($node.contents));
-            { level => $node.level, :$level-hierarchy, :$text, :$link }
-        }
-
-        multi sub find-headings(Positional \list, :$inside-heading) {
-            |list.map(*.&find-headings(:$inside-heading)).Array
-        }
-
-        multi sub find-headings(Pod::Block $node is raw, :$inside-heading) {
-            |$node.contents.map(*.&find-headings(:$inside-heading)).Array
-        }
-
-        multi sub find-headings(Pod::Config $node, :$inside-heading) {
-            hash
-        }
-
-        multi sub find-headings(Pod::Raw $node is raw, :$inside-heading) {
-            |$node.contents.map(*.&find-headings(:$inside-heading)).Array
-        }
-
-        find-headings($!pod).grep(so *);
+        self.find-headings($!pod).grep(so *);
     }
 
     method render() {
