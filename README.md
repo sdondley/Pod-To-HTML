@@ -14,7 +14,7 @@ From the command line:
 
 From within Raku:
 
-    use Pod::To::HTML;
+    use Pod::To::HTML:auth<Raku>;
 
     # Pod file
     say render(
@@ -29,7 +29,7 @@ Installation
 
 From the [Raku ecosystem](https://modules.raku.org):
 
-    $ zef install Pod::To::HTML
+    $ zef install Pod::To::HTML:auth<Raku>
 
 From source:
 
@@ -46,9 +46,9 @@ Description
 
 `Pod::To::HTML` takes a Pod tree and outputs correspondingly formatted HTML using a default or provided Mustache template. There are two ways of accomplishing this:
 
-  * from the command line, using `raku --doc=HTML`, which extracts the Pod from the document and feeds it to `Pod::To::HTML`.
+* from the command line, using `raku --doc=HTML`, which extracts the Pod from the document and feeds it to `Pod::To::HTML`.
 
-  * from within a Raku program via the exported `render` subroutine, which creates a complete HTML document from the Pod. This allows more customization (`title`, `subtitle`, and `lang` can override Pod's corresponding semantics, different Mustache template (possibly with partials), additional template variables for the template, etc.) than simply rendering the Pod via `raku --doc=HTML` which just use the default template.
+* from within a Raku program via the exported `render` subroutine, which creates a complete HTML document from the Pod. This allows more customization (`title`, `subtitle`, and `lang` can override Pod's corresponding semantics, different Mustache template (possibly with partials), additional template variables for the template, etc.) than simply rendering the Pod via `raku --doc=HTML` which just use the default template.
 
 Exported subroutines
 --------------------
@@ -113,4 +113,3 @@ License
 You can use and distribute this module under the terms of the The Artistic License 2.0. See the LICENSE file included in this distribution for complete details.
 
 The `META6.json` file of this distribution may be distributed and modified without restrictions or attribution.
-
