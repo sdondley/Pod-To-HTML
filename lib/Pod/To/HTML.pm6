@@ -11,19 +11,48 @@ class TOC::Calculator {...}
 
 my constant $MAX-COMPILE-TEMPLATE-ATTEMPTS = 5;
 
+role Pod::To::HTML::Renderer {
+    method render(%context) {
+        ...
+    }
+}
+
+class Pod::To::HTML::Mustache does Pod::To::HTML::Renderer {
+    has $.template;
+    has $.main-template-path;
+
+    method render(%context) {
+        # get 'main.mustache' file (and possible its partials) under template path.
+        my ($template-file, %partials) = retrieve-templates($!template, $!main-template-path);
+        my $content = $template-file.IO.slurp;
+
+        # Try to compile a template N times to workaround issues with race-y compilation
+        my $counter = 0;
+        loop {
+            $!.throw if $counter++ == $MAX-COMPILE-TEMPLATE-ATTEMPTS;
+            my $result = try Template::Mustache.new.render($content, %context, :from[%partials], :literal);
+            with $! {
+                warn "An error occurred when rendering [%context<title>], retrying, $counter times left, original message: \n"
+                        ~ $!.message;
+            } else {
+                return $result;
+            }
+        }
+    }
+}
+
 # the Rakudo compiler expects there to be a render method with a Pod::To::<name> invocant
 ## when --doc=name is used. Then the render method is called with a pod tree.
 ## The following adds a Pod::To::HTML class and the method to call the subs in the module.
 class Pod::To::HTML {
     # Renderers
+    has $.page-renderer;
     has $.node-renderer;
     # Data from creator
     has $.title;
     has $.subtitle;
     has &.url;
     has $.lang;
-    has $.template;
-    has $.main-template-path;
     has %.template-vars;
     # Page data
     has %.metadata;
@@ -31,9 +60,10 @@ class Pod::To::HTML {
     has @.body;
     has @.footnotes;
 
-    method new(:$title, :$subtitle, :$lang, :templates(:$template),
-               :$node-renderer = Node::To::HTML, :$main-template-path = '', *%template-vars) {
-        self.bless(:$title, :$subtitle, :$lang, :$template, :$node-renderer, :$main-template-path, :%template-vars);
+    method new(:$title, :$subtitle, :$lang, :templates(:$template), :$main-template-path = '',
+               :$node-renderer = Node::To::HTML, :$page-renderer = Pod::To::HTML::Mustache.new(:$template, :$main-template-path),
+               *%template-vars) {
+        self.bless(:$title, :$subtitle, :$lang, :$node-renderer, :$page-renderer, :%template-vars);
     }
 
     method url($url-text) { &!url.defined ?? &!url($url-text) !! $url-text }
@@ -69,23 +99,7 @@ class Pod::To::HTML {
                       |%!metadata,
                       # user can supply additional template variables for the Mustache template.
                       |%!template-vars;
-
-        # get 'main.mustache' file (and possible its partials) under template path.
-        my ($template-file, %partials) = retrieve-templates($!template, $!main-template-path);
-        my $content = $template-file.IO.slurp;
-
-        # Try to compile a template N times to workaround issues with race-y compilation
-        my $counter = 0;
-        loop {
-            $!.throw if $counter++ == $MAX-COMPILE-TEMPLATE-ATTEMPTS;
-            my $result = try Template::Mustache.new.render($content, %context, :from[%partials], :literal);
-            with $! {
-                warn "An error occurred when rendering [$title-html], retrying, $counter times left, original message: \n"
-                        ~ $!.message;
-            } else {
-                return $result;
-            }
-        }
+        $!page-renderer.render(%context);
     }
 
     # Flushes accumulated footnotes since last call. The idea here is that we can stick calls to this
