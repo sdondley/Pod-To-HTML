@@ -270,7 +270,7 @@ monitor Node::To::HTML {
                 if $node.config<class>;
                 return self.node2html($node.contents);
             }
-            when 'para' { return self.node2html($node.contents[0]); }
+            when 'para' { return self.node2html($node.contents[0], |$node.config); }
             when 'Image' {
                 my $url;
                 if $node.contents == 1 {

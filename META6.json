@@ -1,7 +1,7 @@
 {
     "perl"        : "6.d",
     "name"        : "Pod::To::HTML",
-    "version"     : "0.8",
+    "version"     : "0.8.1",
     "auth"        : "github:Raku",
     "authors"     : [ "Raku" ],
     "description" : "Convert Raku Pod to HTML",
