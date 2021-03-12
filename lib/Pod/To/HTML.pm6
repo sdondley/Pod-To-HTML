@@ -71,7 +71,7 @@ class Pod::To::HTML {
     #| Converts a Pod tree to a HTML document using templates
     method render($pod, TOC::Calculator :$toc = TOC::Calculator, :&url = -> $url { $url }) {
         unless self {
-            return Pod::To::HTML.new.render($pod);
+            return Pod::To::HTML.new.render($pod, :$toc);
         }
         # Keep count of how many footnotes we've output.
         my Int $*done-notes = 0;
