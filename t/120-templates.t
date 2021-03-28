@@ -1,7 +1,7 @@
 use Test; # -*- mode: perl6 -*- 
 use Test::Output;
 use Pod::To::HTML;
-plan 5;
+plan 6;
 my $r;
 
 =begin pod
@@ -43,3 +43,12 @@ my $head='<meta name=viewport content="width=device-width, initial-scale=1">';
 $r = pod2html $=pod[0], :templates("t/templates"), :$head ;
 ok $r ~~ ms[[ $head ]], 'headers are redered as is';
 
+class Pod::To::HTML::Dummy does Pod::To::HTML::Renderer {
+    method render(%context) {
+        "Rendered %context<title>";
+    }
+}
+
+$r = pod2html $=pod[0], :page-renderer(Pod::To::HTML::Dummy);
+
+is $r, 'Rendered The usual suspects', 'Custom renderer was used';
