@@ -14,7 +14,7 @@ From the command line:
 
 From within Raku:
 
-    use Pod::To::HTML:auth<Raku>;
+    use Pod::To::HTML:auth<github:Raku>;
 
     # Pod file
     say render(
